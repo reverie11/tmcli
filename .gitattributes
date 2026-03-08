@@ -1,0 +1,5 @@
+*.c linguist-language=C
+*.h linguist-language=C
+*.sh linguist-language=Shell
+Makefile linguist-language=Makefile
+README.md linguist-documentation
