@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "colors.h"
 #include "tmcli.h"
 
 void print_help() {
@@ -11,8 +12,8 @@ void print_help() {
         "COMMANDS\n"
         "  add    START END NAME     Add a new task with starttime START, \n"
         "                               endtime END, and name NAME\n"
-        "  modify ID OBJ VAL         Modify existing task\n"
-        "  move   ID VAL             Modify existing task\n"
+        "  modify ID OBJ VAL         Modify the start- or endtime of an existing task\n"
+        "  move   ID VAL             Move existing task to different time\n"
         "  del    ID                 Delete an existing task\n"
         "  show                      Show all tasks\n"
         "  reset                     Reset TaskManager's state\n"
@@ -32,6 +33,8 @@ void print_help() {
 
 int main(int argc, char** argv)
 {
+    char msg[MSG_MAXLEN];
+    bzero(msg, sizeof(msg));
     g_verbose = 0;
 
     static struct option long_options[] = {
@@ -88,7 +91,14 @@ int main(int argc, char** argv)
         if(n_args < 3) goto error_handling;
 
         int order_id = str_to_uint(argv[optind++]);
-        if(order_id == -1) goto error_handling;
+        if(order_id == -1){
+            snprintf(msg, sizeof(msg), "conversion error");
+            goto error_handling;
+        }
+        if(tm.task_list[order_id] == NULL) {
+            snprintf(msg, sizeof(msg), "ID is out of range");
+            goto error_handling;
+        }
         int id = tm.task_list[order_id]->id;
         char* object = argv[optind++];
         Time value = str_to_time(argv[optind++]);
@@ -103,9 +113,17 @@ int main(int argc, char** argv)
         TM_save_state(&tm);
 
     } else if(strcmp(cmd, "move") == 0){
-        if(n_args < 2) goto error_handling;
+        if(n_args < 2) {
+            goto error_handling;
+        }
+
         int order_id = str_to_uint(argv[optind++]);
         if(order_id == -1) goto error_handling;
+        if(tm.task_list[order_id] == NULL) {
+            snprintf(msg, sizeof(msg), "ID is out of range");
+            goto error_handling;
+        }
+
         int id = tm.task_list[order_id]->id;
         Time value = str_to_time(argv[optind++]);
         TM_move_task_start(&tm,order_id, value);
@@ -124,9 +142,10 @@ int main(int argc, char** argv)
         }
 
     } else if(strcmp(cmd, "reset") == 0){
-        printf("reset\n");
+        fprintf(stderr, RED "INFO: %s" RESET, msg);
         TM_delete_all_tasks(&tm);
         unlink(STATE_FILE);
+        printf("task list reseted\n");
         return 0;
 
     } else {

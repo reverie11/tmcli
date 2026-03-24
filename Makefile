@@ -1,6 +1,6 @@
 TARGET = tmcli
 SRC_DIR = src
-INC_DIR = include
+INC_DIR = inc
 OBJ_DIR = build/obj
 BIN_DIR = build/bin
 
