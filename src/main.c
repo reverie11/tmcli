@@ -142,10 +142,10 @@ int main(int argc, char** argv)
         }
 
     } else if(strcmp(cmd, "reset") == 0){
-        fprintf(stderr, RED "INFO: %s" RESET, msg);
         TM_delete_all_tasks(&tm);
         unlink(STATE_FILE);
-        printf("task list reseted\n");
+        snprintf(msg, sizeof(msg), "task list reseted");
+        fprintf(stdout, RED "INFO: " RESET "%s\n", msg);
         return 0;
 
     } else {
