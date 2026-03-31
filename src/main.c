@@ -139,11 +139,13 @@ int main(int argc, char** argv)
             int mode = str_to_uint(argv[optind++]);
             TM_print_all_tasks(&tm, mode);
         } else{
-            TM_print_all_tasks(&tm, 0);
+            int curr_taskid = TM_get_curr_taskid(&tm);
+            TM_print_all_tasks_highlight(&tm, 0, curr_taskid);
         }
 
     } else if(strcmp(cmd, "export") == 0){
         TM_export_to_ICS(&tm);
+
     } else if(strcmp(cmd, "reset") == 0){
         TM_delete_all_tasks(&tm);
         unlink(STATE_FILE);

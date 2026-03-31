@@ -1,9 +1,11 @@
-#include <libical/ical.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
+
+#include <libical/ical.h>
 #include <libical/icalcalendar.h>
 
 #include "colors.h"
@@ -674,6 +676,20 @@ void TM_export_to_ICS(TaskManager* tm)
     fclose(file);
     
     icalcomponent_free(c);
+}
+
+int TM_get_curr_taskid(TaskManager* tm)
+{
+   struct tm* curr_time = localtime(&(time_t){time(NULL)}) ;
+   Time now = { .hour = curr_time->tm_hour, .min = curr_time->tm_min};
+
+   for(int i = 0; i < tm->n_active_tasks; i++){
+        Task* task = tm->task_list[i];
+        int after_start = compare_time(&now, &task->start); 
+        int before_end = compare_time(&now, &task->end); 
+        if(after_start >= 0 && before_end < 0) return task->id;
+   }
+   return -1;
 }
 
 /************************ TaskManager Methods END *****************************/

@@ -77,7 +77,7 @@ float calculate_task_duration(const Task* task);
 Time calculate_end_time(const Time start, float duration_h);
 
 /**
- * @brief compare_task
+ * @brief compare_and_reorder_tasks
  * helper function for qsort()
  * @notes
  * =0 if priority(a) = priority(b)
@@ -185,6 +185,12 @@ void TM_print_self(TaskManager* tm);
  * @brief
  */
 void TM_export_to_ICS(TaskManager* tm);
+
+/**
+ * @brief TM_get_curr_taskid
+ * get the order_id of current ongoing task
+ */
+int TM_get_curr_taskid(TaskManager* tm);
 
 /************************ TaskManager Methods END *****************************/
 #endif
