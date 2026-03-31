@@ -1,8 +1,10 @@
+#include <libical/ical.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <libical/icalcalendar.h>
 
 #include "colors.h"
 #include "tmcli.h"
@@ -633,6 +635,45 @@ int TM_sort_tasks(TaskManager* tm)
     qsort(&tm->task_list[0], tm->n_active_tasks, sizeof(Task*),
             compare_and_reorder_tasks);
     return 0;
+}
+
+void TM_export_to_ICS(TaskManager* tm)
+{
+    icaltimetype today = icaltime_today();
+
+    icalcomponent* c = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
+
+    icalcomponent_add_property(c, icalproperty_new_version("2.0"));
+    icalcomponent_add_property(c, icalproperty_new_prodid("-//reverie//tmcli//EN"));
+
+    for(int i = 0; i < tm->n_active_tasks; i++)
+    {
+        Task* task = tm->task_list[i];
+        icalcomponent* event = icalcomponent_new(ICAL_VEVENT_COMPONENT);
+        icalcomponent_add_property(event, icalproperty_new_summary(task->name));
+        icaltimetype event_start = today;
+        event_start.is_date = 0;
+        event_start.hour = task->start.hour;
+        event_start.minute = task->start.min;
+
+        icaltimetype event_end = today;
+        event_end.is_date = 0;
+        event_end.hour = task->end.hour;
+        event_end.minute = task->end.min;
+
+        icalcomponent_add_property(event, icalproperty_new_dtstart(event_start));
+        icalcomponent_add_property(event, icalproperty_new_dtend(event_end));
+
+        icalcomponent_add_component(c, event);
+    }
+
+    char *ical_string = icalcomponent_as_ical_string(c);
+
+    FILE *file = fopen("tmcli_export.ics", "w");
+    fprintf(file, "%s", ical_string);
+    fclose(file);
+    
+    icalcomponent_free(c);
 }
 
 /************************ TaskManager Methods END *****************************/

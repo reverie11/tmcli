@@ -2,6 +2,13 @@
 Simple CLI Tool to manage and plan Tasks.
 
 ## Quick Start
+### Requirements
+```bash
+sudo apt update
+sudo apt libical-dev
+```
+
+### Build and Installation
 ```bash
 git clone https://github.com/reverie11/tmcli.git
 cd tmcli 
@@ -28,6 +35,7 @@ COMMANDS
   move   ID VAL             Move existing task to different time
   del    ID                 Delete an existing task
   show                      Show all tasks
+  export                    export to ICS-Format (.ics)
   reset                     Reset TaskManager's state
 
 OBJECTS

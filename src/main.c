@@ -16,6 +16,7 @@ void print_help() {
         "  move   ID VAL             Move existing task to different time\n"
         "  del    ID                 Delete an existing task\n"
         "  show                      Show all tasks\n"
+        "  export                    export to ICS-Format (.ics)\n"
         "  reset                     Reset TaskManager's state\n"
         "\n"
         "OBJECTS\n"
@@ -141,6 +142,8 @@ int main(int argc, char** argv)
             TM_print_all_tasks(&tm, 0);
         }
 
+    } else if(strcmp(cmd, "export") == 0){
+        TM_export_to_ICS(&tm);
     } else if(strcmp(cmd, "reset") == 0){
         TM_delete_all_tasks(&tm);
         unlink(STATE_FILE);

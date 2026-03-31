@@ -165,7 +165,7 @@ int TM_sort_tasks(TaskManager* tm);
 /**
  * @brief
  */
-void TM_print_task(TaskManager*tm, int task_order_id);
+void TM_print_task(TaskManager* tm, int task_order_id);
 
 /**
  * @brief
@@ -180,6 +180,11 @@ void TM_print_all_tasks_highlight(TaskManager* tm, int mode, int highlight_id);
  * @brief
  */
 void TM_print_self(TaskManager* tm);
+
+/**
+ * @brief
+ */
+void TM_export_to_ICS(TaskManager* tm);
 
 /************************ TaskManager Methods END *****************************/
 #endif
