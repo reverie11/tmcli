@@ -335,8 +335,13 @@ mode_0:
     {
         t = tm->task_list[i];
         if(t != NULL){
-            snprintf(buf, sizeof(buf), 
-                    "%02d:%02d - %02d:%02d    %s", 
+            if(strlen(t->name)<=32) snprintf(buf, sizeof(buf), 
+                    "%02d:%02d - %02d:%02d    %.32s", 
+                    t->start.hour, t->start.min,
+                    t->end.hour, t->end.min,
+                    t->name);
+            else snprintf(buf, sizeof(buf), 
+                    "%02d:%02d - %02d:%02d    %.32s...", 
                     t->start.hour, t->start.min,
                     t->end.hour, t->end.min,
                     t->name);

@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 #define MSG_MAXLEN 64
-#define TASKNAME_MAXLEN 32
+#define TASKNAME_MAXLEN 64
 #define LINE_MAXLEN 64
 
 #define NTASKS_MAX 10
