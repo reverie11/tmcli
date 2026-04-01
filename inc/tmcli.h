@@ -10,6 +10,8 @@
 
 #define NTASKS_MAX 10
 
+#define EXPORT_FILE "tmcli_export.ics"
+
 #ifndef STATE_FILE
 #define STATE_FILE 
 #endif
@@ -184,7 +186,7 @@ void TM_print_self(TaskManager* tm);
 /**
  * @brief
  */
-void TM_export_to_ICS(TaskManager* tm);
+int TM_export_to_ICS(TaskManager* tm);
 
 /**
  * @brief TM_get_curr_taskid

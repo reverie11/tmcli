@@ -36,7 +36,7 @@ COMMANDS
   del    ID                 Delete an existing task
   show                      Show all tasks
   export                    export to ICS-Format (.ics)
-  reset                     Reset TaskManager's state
+  reset                     Reset TMCLI's state
 
 OBJECTS
  start                      task's starttime

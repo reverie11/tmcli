@@ -644,8 +644,9 @@ int TM_sort_tasks(TaskManager* tm)
     return 0;
 }
 
-void TM_export_to_ICS(TaskManager* tm)
+int TM_export_to_ICS(TaskManager* tm)
 {
+    char msg[MSG_MAXLEN];
     icaltimetype today = icaltime_today();
 
     icalcomponent* c = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
@@ -676,11 +677,29 @@ void TM_export_to_ICS(TaskManager* tm)
 
     char *ical_string = icalcomponent_as_ical_string(c);
 
-    FILE *file = fopen("tmcli_export.ics", "w");
-    fprintf(file, "%s", ical_string);
-    fclose(file);
+    FILE *fp = fopen(EXPORT_FILE, "w");
+
+    if(!fp) {
+        snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
+        goto error_handling;
+    }
+    fprintf(fp, "%s", ical_string);
+    fclose(fp);
     
     icalcomponent_free(c);
+
+    if(g_verbose){
+        snprintf(msg, sizeof(msg), "icalcomponent freed");
+        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+    }
+    return 0;
+
+error_handling:
+    if(fp != NULL) {
+        fclose(fp);
+    }
+    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    return -1;
 }
 
 int TM_get_curr_taskid(TaskManager* tm)

@@ -17,7 +17,7 @@ void print_help() {
         "  del    ID                 Delete an existing task\n"
         "  show                      Show all tasks\n"
         "  export                    export to ICS-Format (.ics)\n"
-        "  reset                     Reset TaskManager's state\n"
+        "  reset                     Reset TMCLI's state\n"
         "\n"
         "OBJECTS\n"
         " start                      task's starttime\n"
@@ -144,13 +144,17 @@ int main(int argc, char** argv)
         }
 
     } else if(strcmp(cmd, "export") == 0){
-        TM_export_to_ICS(&tm);
+        int status = TM_export_to_ICS(&tm);
+        if(status == -1){
+            snprintf(msg, sizeof(msg), "export failed");
+        } else snprintf(msg, sizeof(msg), "tasks exported to ./%s", EXPORT_FILE);
+        fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
 
     } else if(strcmp(cmd, "reset") == 0){
         TM_delete_all_tasks(&tm);
         unlink(STATE_FILE);
         snprintf(msg, sizeof(msg), "task list reseted");
-        fprintf(stdout, RED "INFO: " RESET "%s\n", msg);
+        fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
         return 0;
 
     } else {
