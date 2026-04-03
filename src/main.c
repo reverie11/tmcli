@@ -21,7 +21,7 @@ void print_help() {
         "COMMANDS\n"
         "  add      START END NAME     Add a new task with starttime START, \n"
         "                                 endtime END, and name NAME\n"
-        "  modify   ID    OBJ VAL      Modify the start- or endtime of an existing task\n"
+        "  modify   ID    OBJ VAL      Modify the attribute object of an existing task\n"
         "  move     ID    VAL          Move existing task to different time\n"
         "  delete   ID                 Delete an existing task\n"
         "  show                        Show all tasks\n"
@@ -152,6 +152,7 @@ int main(int argc, char** argv)
         
         if(strcmp(object, OBJ_STR[NAME]) == 0){
             TM_modify_task_name(&tm, order_id, value);
+            TM_save_state(&tm);
         } else {
             if(strcmp(object, OBJ_STR[START]) == 0){
                 TM_modify_task_start(&tm, order_id, str_to_time(value));
@@ -159,9 +160,10 @@ int main(int argc, char** argv)
                 TM_modify_task_end(&tm, order_id, str_to_time(value));
             }
             TM_sort_tasks(&tm);
+            TM_save_state(&tm);
+            TM_restore_state(&tm);
         }
         TM_print_all_tasks_highlight(&tm, 0, id);
-        TM_save_state(&tm);
 
     } else if(strcmp(cmd, CMD_STR[MOV]) == 0){
         if(n_args < 2) {
@@ -180,8 +182,9 @@ int main(int argc, char** argv)
         TM_move_task_start(&tm,order_id, value);
 
         TM_sort_tasks(&tm);
-        TM_print_all_tasks_highlight(&tm, 0, id);
         TM_save_state(&tm);
+        TM_restore_state(&tm);
+        TM_print_all_tasks_highlight(&tm, 0, id);
 
     } else if(strcmp(cmd, CMD_STR[SHW]) == 0){
         if(g_verbose) TM_print_self(&tm);
