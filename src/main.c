@@ -7,6 +7,14 @@
 #include "commands.h"
 #include "tmcli.h"
 
+#ifndef VERSION
+#define VERSION "unknown"
+#endif
+
+#ifndef AUTHOR
+#define AUTHOR "unknown"
+#endif
+
 void print_help() {
     printf(
         "Usage: tmcli [OPTIONS] COMMAND [ARGS...]\n\n"
@@ -28,8 +36,10 @@ void print_help() {
         "  -v, --verbose               Enable verbose output\n"
         "  -h, --help                  Show this help message\n"
         "\n"
-        "Version  :  1.0.0\n"
-        "Author   :  reverie\n"
+        "Version  :  %s\n"
+        "Author   :  %s\n",
+        VERSION,
+        AUTHOR
     );
 }
 

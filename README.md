@@ -25,30 +25,29 @@ your `$XDG_CACHE_HOME/tmcli/` or `$HOME/.cache/tmcli/`.
 
 ## Overview
 ```
- > tmcli -h
+ > tmcli
 Usage: tmcli [OPTIONS] COMMAND [ARGS...]
 
 COMMANDS
-  add    START END NAME     Add a new task with starttime START,
-                               endtime END, and name NAME
-  modify ID OBJ VAL         Modify the start- or endtime of an existing task
-  move   ID VAL             Move existing task to different time
-  del    ID                 Delete an existing task
-  show                      Show all tasks
-  export                    export to ICS-Format (.ics)
-  reset                     Reset TMCLI's state
+  add      START END NAME     Add a new task with starttime START,
+                                 endtime END, and name NAME
+  modify   ID    OBJ VAL      Modify the start- or endtime of an existing task
+  move     ID    VAL          Move existing task to different time
+  delete   ID                 Delete an existing task
+  show                        Show all tasks
+  export                      export to ICS-Format (.ics)
+  reset                       Reset TMCLI's state
 
 OBJECTS
- start                      task's starttime
- end                        task's endtime
+ start                        task's starttime
+ end                          task's endtime
 
 OPTIONS
-  -v, --verbose             Enable verbose output
-  -h, --help                Show this help message
+  -v, --verbose               Enable verbose output
+  -h, --help                  Show this help message
 
-Version  :  1.0.0
-Author   :  reverie
-
+Version  :  0.1.0
+Author   :  reverie11
 ```
 
 ## Demo

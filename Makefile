@@ -1,3 +1,7 @@
+
+TMCLI_VERSION = v0.1.0
+TMCLI_AUTHOR = reverie11
+
 TARGET = tmcli
 SRC_DIR = src
 INC_DIR = inc
@@ -10,6 +14,8 @@ CC = gcc
 STATE_FILE ?= state.dat
 CFLAGS = -Wall -Wextra -g -I$(INC_DIR)
 CFLAGS += -DSTATE_FILE='"$(STATE_FILE)"'
+CFLAGS += -DVERSION='"$(TMCLI_VERSION)"'
+CFLAGS += -DAUTHOR='"$(TMCLI_AUTHOR)"'
 
 LDLIBS = -lm
 LDLIBS += -lical 
