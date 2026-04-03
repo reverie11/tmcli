@@ -25,12 +25,14 @@ static const char *CMD_STR[N_CMDS] = {
 typedef enum{
     START, 
     END,
+    NAME,
     N_OBJS,
 } Obj_list;
 
 static const char *OBJ_STR[N_CMDS] = {
     [START] = "start",
     [END]   = "end",
+    [NAME]  = "name",
 };
 
 #endif

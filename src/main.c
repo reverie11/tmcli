@@ -31,6 +31,7 @@ void print_help() {
         "OBJECTS\n"
         " start                        task's starttime\n"
         " end                          task's endtime\n"
+        " name                         task's name\n"
         "\n"
         "OPTIONS\n"
         "  -v, --verbose               Enable verbose output\n"
@@ -147,14 +148,18 @@ int main(int argc, char** argv)
         }
         int id = tm.task_list[order_id]->id;
         char* object = argv[optind++];
-        Time value = str_to_time(argv[optind++]);
-
-        if(strcmp(object, "start") == 0){
-            TM_modify_task_start(&tm, order_id, value);
-        } else if(strcmp(object, "end") == 0){
-            TM_modify_task_end(&tm, order_id, value);
+        char* value = argv[optind++];
+        
+        if(strcmp(object, OBJ_STR[NAME]) == 0){
+            TM_modify_task_name(&tm, order_id, value);
+        } else {
+            if(strcmp(object, OBJ_STR[START]) == 0){
+                TM_modify_task_start(&tm, order_id, str_to_time(value));
+            } else if(strcmp(object, OBJ_STR[NAME]) == 0){
+                TM_modify_task_end(&tm, order_id, str_to_time(value));
+            }
+            TM_sort_tasks(&tm);
         }
-        TM_sort_tasks(&tm);
         TM_print_all_tasks_highlight(&tm, 0, id);
         TM_save_state(&tm);
 

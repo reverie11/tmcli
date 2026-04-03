@@ -147,6 +147,7 @@ int TM_delete_all_tasks(TaskManager* tm);
  */
 int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start);
 int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end);
+int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name);
 int TM_move_task_start(TaskManager* tm, int task_order_id, Time start);
 
 /**

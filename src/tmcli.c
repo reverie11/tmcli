@@ -500,6 +500,33 @@ error_handling:
     return 1;
 }
 
+int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name)
+{
+    char msg[MSG_MAXLEN];
+    Task* task = tm->task_list[task_order_id];
+
+    if(task == NULL) {
+        snprintf(msg, sizeof(msg), "[task %0d] task doesnt exist", 
+                task_order_id);
+        goto error_handling;
+    }
+
+    snprintf(task->name, TASKNAME_MAXLEN, "%s", name);
+
+    if(g_verbose) {
+        snprintf(msg, sizeof(msg), "[task %02d] task modified\n",
+                task_order_id);
+        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+    }
+
+    return 0;
+    
+error_handling:
+    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    return 1;
+
+}
+
 int TM_move_task_start(TaskManager* tm, int task_order_id, Time start)
 {
     char msg[MSG_MAXLEN];
