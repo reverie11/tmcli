@@ -4,8 +4,8 @@
 #include <unistd.h>
 
 #include "colors.h"
-#include "commands.h"
 #include "tmcli.h"
+#include "utils.h"
 
 #ifndef VERSION
 #define VERSION "unknown"
@@ -14,6 +14,40 @@
 #ifndef AUTHOR
 #define AUTHOR "unknown"
 #endif
+
+typedef enum {
+    ADD, 
+    DEL,
+    MOD,
+    MOV,
+    SHW,
+    EXP,
+    RST,
+    N_CMDS,
+} Cmd_list;
+
+static const char *CMD_STR[N_CMDS] = {
+    [ADD] = "add", 
+    [DEL] = "delete",
+    [MOD] = "modify",
+    [MOV] = "move",
+    [SHW] = "show", 
+    [EXP] = "export", 
+    [RST] = "reset",
+};
+
+typedef enum{
+    START, 
+    END,
+    NAME,
+    N_OBJS,
+} Obj_list;
+
+static const char *OBJ_STR[N_CMDS] = {
+    [START] = "start",
+    [END]   = "end",
+    [NAME]  = "name",
+};
 
 void print_help() {
     printf(
@@ -81,7 +115,7 @@ int main(int argc, char** argv)
     // strictly meant for bash completion
     if(argc > 1 && (strcmp(argv[1], "--complete-args") == 0)){
         print_completion(argc-2, argv+2);
-        goto cleanup;
+        return 0;
     }
 
     static struct option long_options[] = {
@@ -212,7 +246,6 @@ int main(int argc, char** argv)
         goto error_handling;
     }
 
-cleanup:
     TM_delete_all_tasks(&tm);
     return 0;
 
