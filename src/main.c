@@ -35,14 +35,15 @@ void print_help() {
 
 void print_completion(int argc, char** argv) {
 
-    TM_state tms;
+    TM_state tms = {.tm.n_active_tasks = 0};
 
     // quick fetch state
     FILE *fp = fopen(STATE_FILE, "r");
-    if(!fp) return;
-    size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
-    fclose(fp);
-    if(bytes < sizeof(TM_state)) return;
+    if(fp != NULL){
+        size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
+        fclose(fp);
+        if(bytes < sizeof(TM_state)) return;
+    }
 
     if(argc == 0){
        for(int i = 0; i < N_CMDS; i++) printf("%s ", CMD_STR[i]);
