@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "utils.h"
 #include "colors.h"
@@ -51,6 +52,44 @@ int validate_task_time(const Task* task)
 error_handling:
     fprintf(stderr, RED "[%-20s] ERROR: %s (id=%02d)\n" RESET, __func__, msg,
             task->id); 
+    return 1;
+}
+
+int validate_date(const Date date)
+{
+    char msg[MSG_MAXLEN];
+    bool dy = (date.year >= 0),
+         dm = (date.month > 0 && date.month <= 12), 
+         dd = (date.day > 0);
+
+    if(!dy){
+        snprintf(msg, sizeof(msg), "date.year is INVALID: %d", date.year);
+        goto error_handling;
+    }
+
+    if(!dm){
+        snprintf(msg, sizeof(msg), "date.month is INVALID: %d", date.month);
+        goto error_handling;
+    }
+
+    if( (date.month <= 7 && date.month % 2 != 0) ||
+        (date.month >= 8 && date.month % 2 == 0)) 
+        dd = dd && (date.day <= 31);
+    else if ( date.month == 2 && is_leap_year(date.year))
+        dd = dd && (date.day <= 29);
+    else if ( date.month == 2 && !is_leap_year(date.year))
+        dd = dd && (date.day <= 28);
+    else dd = dd && (date.day <= 30);
+
+    if(!dd){
+        snprintf(msg, sizeof(msg), "date.day is INVALID: %d", date.day);
+        goto error_handling;
+    }
+
+    return 0;
+
+error_handling:
+    fprintf(stderr, RED "[%-20s] ERROR: %s \n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -217,4 +256,10 @@ int str_is_digit(const char* str)
 
 int ch_is_digit(int ch){return (ch < '0' || ch > '9')?0:1;}
 
+bool is_leap_year(const int year){ return ( year%4 == 0  &&  year%100 != 0 ) || ( year%400 == 0 )?true:false;}
 
+Date get_date_today(void)
+{
+   struct tm* now = localtime(&(time_t){time(NULL)}) ;
+    return (Date) {.day = now->tm_mday, .month = now->tm_mon+1, .year = now->tm_year+1900};
+}

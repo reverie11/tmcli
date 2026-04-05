@@ -3,11 +3,18 @@
 
 #include "types.h"
 
+/******************************** VALIDATION *********************************/
 /**
  * @brief validate_task_time
  * @return 0 if valid, 1 otherwise
  */
 int validate_task_time(const Task* task);
+
+/**
+ * @brief validate_date
+ * @return 0 if valid, 1 otherwise
+ */
+int validate_date(const Date date);
 
 /**
  * @brief validate_str_format
@@ -22,6 +29,7 @@ int validate_task_time(const Task* task);
  */
 int validate_str_format(const char* str);
 
+/******************************** CALCULATION ********************************/
 /**
  * @brief calculate_task_duration
  */
@@ -29,6 +37,7 @@ float calculate_task_duration(const Task* task);
 
 Time calculate_end_time(const Time start, float duration_h);
 
+/******************************** COMPARISON *********************************/
 /**
  * @brief compare_and_reorder_tasks
  * helper function for qsort()
@@ -40,6 +49,7 @@ Time calculate_end_time(const Time start, float duration_h);
 int compare_and_reorder_tasks(const void* a, const void* b);
 int compare_time(const void* a, const void* b);
 
+/******************************** CONVERSION *********************************/
 /**
  * @brief str_to_time
  */
@@ -54,6 +64,7 @@ Time str_to_time(const char* str);
  */
 long str_to_uint(const char* str);
 
+/******************************** BOOLEAN ************************************/
 /**
  * @brief
  */
@@ -63,5 +74,10 @@ int str_is_digit(const char* str);
  * @brief
  */
 int ch_is_digit(int ch);
+
+bool is_leap_year(const int year);
+
+/******************************** GET ****************************************/
+Date get_date_today(void);
 
 #endif

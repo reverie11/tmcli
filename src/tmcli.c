@@ -26,6 +26,7 @@ int TM_init(TaskManager* tm)
     for(int i = 0; i < NTASKS_MAX; i++){
         tm->task_list[i] = NULL;
     }
+    tm->task_date = get_date_today();
     tm->n_active_tasks = 0;
     tm->n_created_tasks = 0;
     tm->initialized = 1;
@@ -89,6 +90,8 @@ void TM_print_task(TaskManager*tm, int task_order_id)
     if( t != NULL){
         printf("## Task %2d\n", t->id);
         printf("%-12s: %s\n", "name", t->name);
+        printf("%-12s: %02d.%02d.%04d\n", "date", tm->task_date.day,
+                tm->task_date.month, tm->task_date.year);
         printf("%-12s: %02d:%02d\n", "start", t->start.hour, t->start.min);
         printf("%-12s: %02d:%02d\n", "end", t->end.hour, t->end.min);
         float m = (t->duration_h - (int)t->duration_h)*60;
@@ -101,20 +104,31 @@ void TM_print_task(TaskManager*tm, int task_order_id)
 
 void TM_print_all_tasks_highlight(TaskManager* tm, int mode, int highlight_id)
 {
-    char buf[LINE_MAXLEN];
+    char buf[LINE_MAXLEN-4];
+    char title[32];
     Task* t;
 
     switch(mode){
         default:
-        case 0:
-            goto mode_0;
+        case 0: // compact mode
+            goto mode_0; 
             break;
-        case 1:
+        case 1: // verbose mode 
             goto mode_1;
             break;
     }
 
 mode_0:
+    // header
+    snprintf(title, sizeof(title), " %02d.%02d.%04d ", 
+            tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    printf(CYAN);
+    for(int i = 0; i < LINE_MAXLEN/2 - (int)strlen(title)/2; i++) printf("-");
+    printf("%s", title);
+    for(int i = 0; i < LINE_MAXLEN/2 - (int)strlen(title)/2; i++) printf("-");
+    printf("\n" RESET);
+
+    // body
     for(int i=0; i < tm->n_active_tasks; i++)
     {
         t = tm->task_list[i];
@@ -141,16 +155,7 @@ mode_0:
 mode_1:
     for(int i=0; i < tm->n_created_tasks; i++)
     {
-        t = tm->task_list[i];
-        if(t != NULL){
-            printf(BLUE "## Task %2d\n" RESET, t->order_id);
-            printf("%-12s: %s\n", "name", t->name);
-            printf("%-12s: %02d:%02d\n", "start", t->start.hour, t->start.min);
-            printf("%-12s: %02d:%02d\n", "end", t->end.hour, t->end.min);
-            float m = (t->duration_h - (int)t->duration_h)*60;
-            float h = t->duration_h-m/60;
-            printf("%-12s: %.0f hour(s) %.0f min(s)\n\n", "duration", h, m);
-        }
+        TM_print_task(tm, i);
     }
     return;
 }
@@ -158,8 +163,11 @@ mode_1:
 void TM_print_self(TaskManager* tm)
 {
     printf("# Task Manager\n");
+    printf("task_date = %02d.%02d.%04d\n", tm->task_date.day,
+            tm->task_date.month, tm->task_date.year);
     printf("n_active_tasks = %d\n", tm->n_active_tasks);
     printf("n_created_tasks = %d\n\n", tm->n_created_tasks);
+    printf("initialized = %d\n\n", tm->initialized);
 }
 
 int TM_delete_task(TaskManager* tm, int task_order_id)

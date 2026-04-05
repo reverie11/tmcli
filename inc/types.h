@@ -21,6 +21,12 @@ typedef struct time{
     int8_t min;
 }Time;
 
+typedef struct date{
+    int8_t day;
+    int8_t month;
+    int16_t year;
+}Date;
+
 /**
  * @brief typedef struct task
  *
@@ -37,6 +43,7 @@ typedef struct task {
 }Task;
 
 typedef struct task_manager{
+    Date task_date;
     Task* task_list[NTASKS_MAX];
     int8_t n_created_tasks;
     int8_t n_active_tasks;
