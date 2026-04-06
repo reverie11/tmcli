@@ -51,25 +51,32 @@ static const char *OBJ_STR[N_CMDS] = {
 
 void print_help() {
     printf(
-        "Usage: tmcli [OPTIONS] COMMAND [ARGS...]\n\n"
-        "COMMANDS\n"
-        "  add      START END NAME     Add a new task with starttime START, \n"
-        "                                 endtime END, and name NAME\n"
-        "  modify   ID    OBJ VAL      Modify the attribute object of an existing task\n"
-        "  move     ID    VAL          Move existing task to different time\n"
-        "  delete   ID                 Delete an existing task\n"
-        "  show                        Show all tasks\n"
-        "  export                      export to ICS-Format (.ics)\n"
-        "  reset                       Reset TMCLI's state\n"
-        "\n"
-        "OBJECTS\n"
-        " start                        task's starttime\n"
-        " end                          task's endtime\n"
-        " name                         task's name\n"
+        "Usage: tmcli [OPTIONS] [PRE-COMMAND] COMMAND [ARGS...]\n"
         "\n"
         "OPTIONS\n"
-        "  -v, --verbose               Enable verbose output\n"
-        "  -h, --help                  Show this help message\n"
+        "  -v, --verbose              Enable verbose output\n"
+        "  -h, --help                 Show this help message\n"
+        "\n"
+        "PRE-COMMAND\n"
+        "  on       DATE              Temporarily set the working date, default is today\n"
+        "\n"
+        "COMMAND\n"
+        "  add      STRT ENDT NAME    Add a new task with start-, endtime, and name\n"
+        "  modify   T_ID OBJT TIME    Modify the attribute object of an existing task of specified id\n"
+        "  move     T_ID      TIME    Move anexisting task of a specified id to specified time\n"
+        "  delete   T_ID              Delete an existing task of a specified id\n"
+        "  show                       Show all exisiting tasks\n"
+        "  export                     export all existiing tasks to ICS-Format (.ics)\n"
+        "  reset                      Reset task-list\n"
+        "\n"
+        "OBJECTS\n"
+        "  start                       task's starttime\n"
+        "  end                         task's endtime\n"
+        "  name                        task's name\n"
+        "\n"
+        "FORMAT\n"
+        "  DATE                       D[D.MM.YYYY]\n"
+        "  TIME                       H[H:MM]\n"
         "\n"
         "Version  :  %s\n"
         "Author   :  %s\n",
@@ -150,7 +157,7 @@ int main(int argc, char** argv)
         goto error_handling;
     }
     
-    if(strcmp(cmd, "date") == 0){
+    if(strcmp(cmd, "on") == 0){
         if(n_args < 1) goto error_handling;
         char* arg1 = argv[optind++];
         Date d = str_to_date(arg1);
