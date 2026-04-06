@@ -19,3 +19,4 @@ fi
 cp ./build/bin/tmcli $BIN_DIR/tmcli
 cp ./tmcli-completion.sh $COMPLETION_DIR/tmcli
 hash -r
+. $COMPLETION_DIR/tmcli
