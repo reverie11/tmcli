@@ -47,7 +47,7 @@ int TM_init(TaskManager* tm)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -89,7 +89,7 @@ int TM_create_task(TaskManager* tm, const Time start, const Time end, const
     return t->id;
 
 error_handling:
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return -1;
 }
 
@@ -204,7 +204,7 @@ int TM_delete_task(TaskManager* tm, int task_order_id)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -235,7 +235,7 @@ int TM_delete_all_tasks(TaskManager* tm)
 
     return 0;
 error_handling:
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -268,7 +268,7 @@ int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start)
     return 0;
     
 error_handling:
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -301,7 +301,7 @@ int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end)
     return 0;
     
 error_handling:
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -327,7 +327,7 @@ int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name)
     return 0;
     
 error_handling:
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
@@ -357,7 +357,7 @@ int TM_move_task_start(TaskManager* tm, int task_order_id, Time start)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -415,7 +415,7 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -485,7 +485,7 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
@@ -551,7 +551,7 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
@@ -642,8 +642,7 @@ int TM_export_to_ICS(TaskManager* tm)
 error_handling:
     if(fp != NULL) fclose(fp);
     if(c != NULL) icalcomponent_free(c);
-    if(ical_string!= NULL) free(ical_string);
-    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return -1;
 }
 

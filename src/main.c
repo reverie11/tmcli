@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <string.h>
+#include <limits.h>
 
 #include "colors.h"
 #include "tmcli.h"
@@ -16,6 +17,7 @@
 #endif
 
 typedef enum {
+    _ON, // pre-command
     ADD, 
     DEL,
     MOD,
@@ -27,6 +29,7 @@ typedef enum {
 } Cmd_list;
 
 static const char *CMD_STR[N_CMDS] = {
+    [_ON] = "on",
     [ADD] = "add", 
     [DEL] = "delete",
     [MOD] = "modify",
@@ -85,31 +88,68 @@ void print_help() {
     );
 }
 
-void print_completion(int argc, char** argv) {
+void print_completion(int argc, char** argv ) {
 
     TM_state tms = {.tm.n_active_tasks = 0};
 
-    // quick fetch state
-    FILE *fp = fopen(STATE_DIR "/state.date", "r");
-    if(fp != NULL){
-        size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
-        fclose(fp);
-        if(bytes < sizeof(TM_state)) return;
+    char state_file[PATH_MAX];
+    Date target_date = get_date_today();
+    Time now = get_time_now();
+
+    int ind = 0;
+    
+    if(argc >= 1 && strcmp(argv[0], CMD_STR[_ON]) == 0){
+        if(argc == 1) printf("%02d.%02d.%04d", target_date.day, target_date.month, target_date.year);
+        if(argc >= 2 && validate_date(str_to_date(argv[1]) ) == 0 ) {
+            target_date = str_to_date(argv[1]);
+            ind+=2;
+        }
     }
 
-    if(argc == 0){
-       for(int i = 0; i < N_CMDS; i++) printf("%s ", CMD_STR[i]);
-    } else if(argc == 1){
-        if(strcmp(argv[0], CMD_STR[MOD]) == 0 ||
-           strcmp(argv[0], CMD_STR[MOV]) == 0 ||
-           strcmp(argv[0], CMD_STR[DEL]) == 0 ){
-            for(int i = 0; i < tms.tm.n_active_tasks; i++) printf("%d ", i);
-        }
-    } else if(argc == 2){
-        if( strcmp(argv[0], CMD_STR[MOD]) == 0 ){
-            for(int i = 0; i < N_OBJS; i++) printf("%s ", OBJ_STR[i]);
-        }
+    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
+            target_date.day, target_date.month, target_date.year);
+
+    // quick fetch state
+    FILE *fp = fopen(state_file, "r");
+
+    if(fp != NULL){
+        fread(&tms, 1, sizeof(TM_state), fp);
+        fclose(fp);
     }
+
+    if(argc == ind){
+        // tmcli 
+       for(int i = 0; i < N_CMDS; i++) printf("%s ", CMD_STR[i]);
+    } else if(argc == ind+1){
+        // tmcli CMD
+        if( strcmp(argv[ind], CMD_STR[MOD]) == 0 ||
+            strcmp(argv[ind], CMD_STR[MOV]) == 0 ||
+            strcmp(argv[ind], CMD_STR[DEL]) == 0 )
+        {
+            for(int i = 0; i < tms.tm.n_active_tasks; i++) printf("%d ", i);
+        } else if ( strcmp(argv[ind], CMD_STR[ADD]) == 0 ){
+            printf("%02d:%02d ", now.hour, now.min);
+        }
+    } else if(argc == ind+2){ 
+        // tmcli CMD ARG1 
+        if( strcmp(argv[ind], CMD_STR[MOD]) == 0 )
+            for(int i = 0; i < N_OBJS; i++) printf("%s ", OBJ_STR[i]);
+        else if ( strcmp(argv[ind], CMD_STR[ADD]) == 0 )
+            printf("%02d:%02d ", now.hour+1, now.min);
+        else if (strcmp(argv[ind], CMD_STR[MOV]) == 0) 
+            printf("%02d:%02d ", now.hour+1, now.min);
+    } else if(argc == ind+3){
+        // tmcli CMD ARG1 ARG2
+        if (  strcmp(argv[ind], CMD_STR[ADD]) == 0 ||
+             (strcmp(argv[ind], CMD_STR[MOD]) == 0 && 
+              strcmp(argv[ind+2], OBJ_STR[NAME]) == 0) ){
+            printf("taskNameA taskNameB taskNameC");
+        } else if ( strcmp(argv[ind], CMD_STR[MOD]) == 0 &&
+                    strcmp(argv[ind+2], OBJ_STR[NAME]) != 0){
+            printf("%02d:%02d ", now.hour, now.min);
+        } 
+    }   
+
 }
 
 int main(int argc, char** argv)
@@ -121,6 +161,7 @@ int main(int argc, char** argv)
 
     // strictly meant for bash completion
     if(argc > 1 && (strcmp(argv[1], "--complete-args") == 0)){
+        //if(argc > 2) print_completion(argc-3, argv+3, str_to_date(argv[2]));
         print_completion(argc-2, argv+2);
         return 0;
     }
@@ -132,7 +173,7 @@ int main(int argc, char** argv)
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "vh", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, ":vh", long_options, NULL)) != -1) {
         switch (opt) {
         case 'v':
             g_verbose = 1;
@@ -140,8 +181,11 @@ int main(int argc, char** argv)
         case 'h':
             print_help();
             return 0;
+        case '?':
         default:
-            print_help();
+            snprintf(msg, sizeof(msg), "unknown options: -%c", optopt);
+            fprintf(stdout, RED "ERROR: " RESET "%s\n", msg);
+            fprintf(stdout, "try passing --help instead\n");
             return 1;
         }
     }
@@ -150,15 +194,20 @@ int main(int argc, char** argv)
     bzero(&tm, sizeof(TaskManager));
     TM_init(&tm);
 
-    char* cmd = argv[optind++];
+    const char* cmd = CMD_STR[SHW];
     int n_args = argc - optind;
 
-    if(cmd == NULL){
-        goto error_handling;
+    if(optind < argc) {
+        cmd = argv[optind++];
+        n_args = argc - optind;
     }
-    
-    if(strcmp(cmd, "on") == 0){
-        if(n_args < 1) goto error_handling;
+
+    if(strcmp(cmd, CMD_STR[_ON]) == 0){
+        if(n_args < 1) {
+            snprintf(msg, sizeof(msg), "missing args");
+            goto error_handling;
+        }
+
         char* arg1 = argv[optind++];
         Date d = str_to_date(arg1);
         if(d.day != -1) 
@@ -175,8 +224,13 @@ int main(int argc, char** argv)
 
     TM_restore_state(&tm);
 
+    // add      STRT ENDT NAME
     if(strcmp(cmd, CMD_STR[ADD]) == 0){
-        if(n_args < 3) goto error_handling;
+        if(n_args < 1) {
+            snprintf(msg, sizeof(msg), "missing args");
+            goto error_handling;
+        }
+
         char* start = argv[optind++];
         char* end = argv[optind++];
         char* name = argv[optind++];
@@ -189,22 +243,38 @@ int main(int argc, char** argv)
         TM_print_all_tasks_highlight(&tm, 0, id);
         TM_save_state(&tm);
 
+    // delete   T_ID 
     } else if(strcmp(cmd, CMD_STR[DEL]) == 0){
-        if(n_args < 1) goto error_handling;
+        if(n_args < 1) {
+            snprintf(msg, sizeof(msg), "missing args");
+            goto error_handling;
+        }
+
         int order_id = str_to_uint(argv[optind++]);
-        if(order_id == -1) goto error_handling;
+        if(order_id == -1) {
+            snprintf(msg, sizeof(msg), "conversion error");
+            goto error_handling;
+        }
+        if(order_id >= tm.n_active_tasks) {
+            snprintf(msg, sizeof(msg), "ID is out of range");
+            goto error_handling;
+        }
         TM_delete_task(&tm, order_id);
         TM_save_state(&tm);
 
+    // modify   T_ID OBJT TIME
     } else if(strcmp(cmd, CMD_STR[MOD]) == 0){
-        if(n_args < 3) goto error_handling;
+        if(n_args < 3) {
+            snprintf(msg, sizeof(msg), "missing args");
+            goto error_handling;
+        }
 
         int order_id = str_to_uint(argv[optind++]);
         if(order_id == -1){
             snprintf(msg, sizeof(msg), "conversion error");
             goto error_handling;
         }
-        if(tm.task_list[order_id] == NULL) {
+        if(order_id >= tm.n_active_tasks) {
             snprintf(msg, sizeof(msg), "ID is out of range");
             goto error_handling;
         }
@@ -226,15 +296,20 @@ int main(int argc, char** argv)
             TM_refresh_state(&tm);
         }
         TM_print_all_tasks_highlight(&tm, 0, id);
-
+    
+    // move     T_ID      TIME
     } else if(strcmp(cmd, CMD_STR[MOV]) == 0){
         if(n_args < 2) {
+            snprintf(msg, sizeof(msg), "missing args");
             goto error_handling;
         }
 
         int order_id = str_to_uint(argv[optind++]);
-        if(order_id == -1) goto error_handling;
-        if(tm.task_list[order_id] == NULL) {
+        if(order_id == -1){
+            snprintf(msg, sizeof(msg), "conversion error");
+            goto error_handling;
+        }
+        if(order_id >= tm.n_active_tasks) {
             snprintf(msg, sizeof(msg), "ID is out of range");
             goto error_handling;
         }
@@ -249,6 +324,7 @@ int main(int argc, char** argv)
 
         TM_print_all_tasks_highlight(&tm, 0, id);
 
+    // show
     } else if(strcmp(cmd, CMD_STR[SHW]) == 0){
         if(g_verbose) TM_print_self(&tm);
         if(n_args > 0){
@@ -259,6 +335,7 @@ int main(int argc, char** argv)
             TM_print_all_tasks_highlight(&tm, 0, curr_taskid);
         }
 
+    // export
     } else if(strcmp(cmd, CMD_STR[EXP]) == 0){
         if(TM_export_to_ICS(&tm) != 0){
             snprintf(msg, sizeof(msg), "export failed");
@@ -267,6 +344,7 @@ int main(int argc, char** argv)
         snprintf(msg, sizeof(msg), "tasks exported to ./%s", EXPORT_FILE);
         fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
 
+    // reset
     } else if(strcmp(cmd, CMD_STR[RST]) == 0){
         if (TM_reset_state(&tm) != 0){
             snprintf(msg, sizeof(msg), "reset failed");
@@ -275,6 +353,7 @@ int main(int argc, char** argv)
         fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
 
     } else {
+        snprintf(msg, sizeof(msg), "unknown command: %s", cmd);
         goto error_handling;
     }
 
@@ -282,8 +361,8 @@ int main(int argc, char** argv)
     return 0;
 
 error_handling:
-    if(g_verbose) fprintf(stdout, RED "ERROR: " RESET "%s\n", msg);
-    else print_help();
+    fprintf(stdout, RED "ERROR: " RESET "%s\n", msg);
+    fprintf(stdout, "try passing --help instead\n");
     TM_delete_all_tasks(&tm);
     return 1;
 }

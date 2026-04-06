@@ -119,4 +119,9 @@ bool is_leap_year(const int year);
  */
 Date get_date_today(void);
 
+/**
+ * @brief get_time_now.
+ */
+Time get_time_now(void);
+
 #endif

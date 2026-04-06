@@ -50,7 +50,7 @@ int validate_task_time(const Task* task)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-30s] ERROR: %s (id=%02d)\n" RESET, __func__, msg,
+    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s (id=%02d)\n" RESET, __func__, msg,
             task->id); 
     return 1;
 }
@@ -89,7 +89,7 @@ int validate_date(const Date date)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-30s] ERROR: %s \n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s \n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -187,7 +187,7 @@ int validate_time_format(const char* str)
     }
     return 0;
 error_handling:
-    fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -224,7 +224,7 @@ int validate_date_format(const char* str)
     }
     return 0;
 error_handling:
-    fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
+    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
@@ -369,5 +369,11 @@ Date get_date_today(void)
 {
    struct tm* now = localtime(&(time_t){time(NULL)}) ;
     return (Date) {.day = now->tm_mday, .month = now->tm_mon+1, .year = now->tm_year+1900};
+}
+
+Time get_time_now(void)
+{
+   struct tm* now = localtime(&(time_t){time(NULL)}) ;
+    return (Time) {.hour = now->tm_hour, .min = now->tm_min};
 }
 
