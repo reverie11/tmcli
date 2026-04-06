@@ -3,13 +3,16 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 #include <time.h>
+#include <limits.h>
 
 #include <libical/ical.h>
 #include <libical/icalcalendar.h>
 
 #include "colors.h"
 #include "tmcli.h"
+#include "types.h"
 #include "utils.h"
 
 bool g_verbose = 1;
@@ -17,10 +20,15 @@ bool g_verbose = 1;
 int TM_init(TaskManager* tm)
 {
     char msg[MSG_MAXLEN];
-
-    if(tm->initialized == 1){
-        snprintf(msg, sizeof(msg), "Reinitialization detected");
+    
+    if(!tm) {
+        snprintf(msg, sizeof(msg), "Initializing a nullpointer");
         goto error_handling;
+    }
+
+    if(tm->initialized){
+        snprintf(msg, sizeof(msg), "Reinitialization detected");
+        fprintf(stderr, YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg); 
     }
 
     for(int i = 0; i < NTASKS_MAX; i++){
@@ -33,12 +41,13 @@ int TM_init(TaskManager* tm)
 
     if(g_verbose){
         snprintf(msg, sizeof(msg), "TaskManager iniatialized");
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
 
     return 0;
+
 error_handling:
-    fprintf(stderr, RED "[%-20s] WARNING: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -75,12 +84,12 @@ int TM_create_task(TaskManager* tm, const Time start, const Time end, const
 
     if(g_verbose){
         snprintf(msg, sizeof(msg), "task created with id=%d", t->id);
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
     return t->id;
 
 error_handling:
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return -1;
 }
 
@@ -106,6 +115,7 @@ void TM_print_all_tasks_highlight(TaskManager* tm, int mode, int highlight_id)
 {
     char buf[LINE_MAXLEN-4];
     char title[32];
+    Date today = get_date_today();
     Task* t;
 
     switch(mode){
@@ -120,7 +130,10 @@ void TM_print_all_tasks_highlight(TaskManager* tm, int mode, int highlight_id)
 
 mode_0:
     // header
-    snprintf(title, sizeof(title), " %02d.%02d.%04d ", 
+    if(compare_date(&tm->task_date, &today) == 0) 
+        snprintf(title, sizeof(title), " %02d.%02d.%04d (Today) ", 
+            tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    else snprintf(title, sizeof(title), " %02d.%02d.%04d ", 
             tm->task_date.day, tm->task_date.month, tm->task_date.year);
     printf(CYAN);
     for(int i = 0; i < LINE_MAXLEN/2 - (int)strlen(title)/2; i++) printf("-");
@@ -186,12 +199,12 @@ int TM_delete_task(TaskManager* tm, int task_order_id)
 
     if(g_verbose){
         snprintf(msg, sizeof(msg), "[task %02d] task deleted (id=%d)", task_order_id, task_id);
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -222,7 +235,7 @@ int TM_delete_all_tasks(TaskManager* tm)
 
     return 0;
 error_handling:
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -249,13 +262,13 @@ int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start)
     if(g_verbose) {
         snprintf(msg, sizeof(msg), "[task %02d] task modified\n",
                 task_order_id);
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
 
     return 0;
     
 error_handling:
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -282,13 +295,13 @@ int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end)
     if(g_verbose) {
         snprintf(msg, sizeof(msg), "[task %02d] task modified\n",
                 task_order_id);
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
 
     return 0;
     
 error_handling:
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -308,13 +321,13 @@ int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name)
     if(g_verbose) {
         snprintf(msg, sizeof(msg), "[task %02d] task modified\n",
                 task_order_id);
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
 
     return 0;
     
 error_handling:
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
@@ -344,16 +357,25 @@ int TM_move_task_start(TaskManager* tm, int task_order_id, Time start)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
 int TM_save_state(TaskManager* tm)
 {
+    return TM_save_state_to_date(tm, tm->task_date);
+}
+
+int TM_save_state_to_date(TaskManager* tm, const Date target_date)
+{
     TM_state tms;
     char msg[MSG_MAXLEN];
+    char state_file[PATH_MAX];
 
-    FILE *fp = fopen(STATE_FILE, "w");
+    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
+            target_date.day, target_date.month, target_date.year);
+
+    FILE *fp = fopen(state_file, "w");
     if(!fp) {
         snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
         goto error_handling;
@@ -371,6 +393,7 @@ int TM_save_state(TaskManager* tm)
     }
     assert(tms.tm.n_active_tasks == tm->n_active_tasks);
 
+    // state saving happens here
     size_t bytes = fwrite(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
         snprintf(msg, sizeof(msg), "error on fwrite: %ld Bytes written"
@@ -382,8 +405,8 @@ int TM_save_state(TaskManager* tm)
     fp = NULL;
 
     if(g_verbose) {
-        snprintf(msg, sizeof(msg), "current state saved\n");
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        snprintf(msg, sizeof(msg), "current state saved");
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
 
     return 0;
@@ -392,21 +415,31 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
 int TM_restore_state(TaskManager *tm)
 {
+    return TM_restore_state_from_date(tm, tm->task_date);
+}
+
+int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
+{
     TM_state tms;
     char msg[MSG_MAXLEN];
+    char state_file[PATH_MAX];
 
-    FILE *fp = fopen(STATE_FILE, "r");
+    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
+            target_date.day, target_date.month, target_date.year);
+
+    FILE *fp = fopen(state_file, "r");
     if(!fp) {
-        snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
         if(g_verbose) {
-            snprintf(msg, sizeof(msg), "no state to restore\n");
-            printf(YELLOW "[%-20s] WARNING: %s\n" RESET, __func__, msg);
+            snprintf(msg, sizeof(msg), "no state to restore");
+            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+            snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
+            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
         }
         return 1;
     }
@@ -417,6 +450,7 @@ int TM_restore_state(TaskManager *tm)
                 "(expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
+    fclose(fp);
     memcpy(tm, &tms.tm, sizeof(TaskManager));
 
     Task* t;
@@ -442,7 +476,7 @@ int TM_restore_state(TaskManager *tm)
 
     if(g_verbose) {
         snprintf(msg, sizeof(msg), "last state restored");
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
 
     return 0;
@@ -451,9 +485,91 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 
+}
+
+int TM_refresh_state(TaskManager* tm)
+{
+    TM_state tms;
+    char msg[MSG_MAXLEN];
+    char state_file[PATH_MAX];
+
+    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
+            tm->task_date.day, tm->task_date.month, tm->task_date.year);
+
+    FILE *fp = fopen(state_file, "r");
+    if(!fp) {
+        if(g_verbose) {
+            snprintf(msg, sizeof(msg), "no state to restore");
+            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+            snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
+            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+        }
+        return 1;
+    }
+
+    size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
+    if(bytes < sizeof(TM_state)){
+        snprintf(msg, sizeof(msg), "error on fwrite: %ld Bytes written"
+                "(expect=%ld)\n", bytes, sizeof(TM_state));
+        goto error_handling;
+    }
+    fclose(fp);
+
+    assert(tms.tm.n_active_tasks == tm->n_active_tasks);
+    assert(compare_date(&tms.tm.task_date, &tm->task_date) == 0);
+    Task* t;
+    for(int i = 0; i < tms.tm.n_active_tasks; i++){
+        t = tm->task_list[i];
+
+        int order_id = tms.tm_task[i].order_id;
+
+        if(t == NULL){
+            snprintf(msg, sizeof(msg), "malloc() failed");
+            goto error_handling;
+        } 
+
+        t->id = tms.tm_task[i].id;
+        t->order_id = tms.tm_task[i].order_id;
+        t->start = tms.tm_task[i].start;
+        t->end = tms.tm_task[i].end;
+        t->duration_h = tms.tm_task[i].duration_h;
+        strcpy(t->name, tms.tm_task[i].name);
+
+        tm->task_list[order_id] = t;
+    }
+
+    if(g_verbose) {
+        snprintf(msg, sizeof(msg), "last state refreshed");
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
+    }
+    return 0;
+
+error_handling:
+    if(fp != NULL) {
+        fclose(fp);
+    }
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
+    return 1;
+
+}
+
+int TM_reset_state(TaskManager* tm)
+{
+    char msg[MSG_MAXLEN];
+    char state_file[PATH_MAX];
+    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
+            tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    if(unlink(state_file) != 0){
+        if(g_verbose) {
+            snprintf(msg, sizeof(msg), "unlink: %s", strerror(errno));
+            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+        }
+        return 1;
+    }
+    return 0;
 }
 
 int TM_sort_tasks(TaskManager* tm)
@@ -466,7 +582,12 @@ int TM_sort_tasks(TaskManager* tm)
 int TM_export_to_ICS(TaskManager* tm)
 {
     char msg[MSG_MAXLEN];
-    icaltimetype today = icaltime_today();
+    icaltimetype today = {
+        .year = tm->task_date.year,
+        .month = tm->task_date.month,
+        .day = tm->task_date.day,
+        .is_date = false,
+    };
 
     icalcomponent* c = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
 
@@ -479,12 +600,10 @@ int TM_export_to_ICS(TaskManager* tm)
         icalcomponent* event = icalcomponent_new(ICAL_VEVENT_COMPONENT);
         icalcomponent_add_property(event, icalproperty_new_summary(task->name));
         icaltimetype event_start = today;
-        event_start.is_date = 0;
         event_start.hour = task->start.hour;
         event_start.minute = task->start.min;
 
         icaltimetype event_end = today;
-        event_end.is_date = 0;
         event_end.hour = task->end.hour;
         event_end.minute = task->end.min;
 
@@ -497,27 +616,34 @@ int TM_export_to_ICS(TaskManager* tm)
     char *ical_string = icalcomponent_as_ical_string(c);
 
     FILE *fp = fopen(EXPORT_FILE, "w");
-
     if(!fp) {
         snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
         goto error_handling;
     }
+
     fprintf(fp, "%s", ical_string);
-    fclose(fp);
-    
+
+    // cleanup
     icalcomponent_free(c);
+    icaltimezone_free_builtin_timezones();
+    icalmemory_free_ring();
+
+    if(fclose(fp) == EOF) {
+        snprintf(msg, sizeof(msg), "fclose: %s", strerror(errno));
+        goto error_handling;
+    }
 
     if(g_verbose){
-        snprintf(msg, sizeof(msg), "icalcomponent freed");
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        snprintf(msg, sizeof(msg), "tasks exported to " EXPORT_FILE);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
     return 0;
 
 error_handling:
-    if(fp != NULL) {
-        fclose(fp);
-    }
-    fprintf(stderr, RED "[%-20s] FAIL: %s\n" RESET, __func__, msg); 
+    if(fp != NULL) fclose(fp);
+    if(c != NULL) icalcomponent_free(c);
+    if(ical_string!= NULL) free(ical_string);
+    fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return -1;
 }
 

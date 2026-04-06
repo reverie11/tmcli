@@ -18,7 +18,7 @@ int validate_task_time(const Task* task)
     if(sh && sm && eh && em && dh){ 
         if(g_verbose){
             snprintf(msg, sizeof(msg), "time is valid");
-            printf(GREEN "[%-20s] SUCCESS: %s (id=%02d)\n" RESET, __func__,
+            printf(GREEN "[%-30s] SUCCESS: %s (id=%02d)\n" RESET, __func__,
                     msg, task->id);
         }
     } else {
@@ -50,7 +50,7 @@ int validate_task_time(const Task* task)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-20s] ERROR: %s (id=%02d)\n" RESET, __func__, msg,
+    fprintf(stderr, RED "[%-30s] ERROR: %s (id=%02d)\n" RESET, __func__, msg,
             task->id); 
     return 1;
 }
@@ -89,7 +89,7 @@ int validate_date(const Date date)
     return 0;
 
 error_handling:
-    fprintf(stderr, RED "[%-20s] ERROR: %s \n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] ERROR: %s \n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -114,7 +114,7 @@ Time calculate_end_time(const Time start, float duration_h){
         char msg[MSG_MAXLEN];
         end.hour-=24;
         snprintf(msg, sizeof(msg), "endtime is on the next day;,");
-        if(g_verbose) printf(YELLOW "[%-20s] WARNING: %s\n" RESET, __func__, msg);
+        if(g_verbose) printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
     }
     return end;
 }
@@ -144,7 +144,16 @@ int compare_time(const void* a, const void* b)
     return ((time_a->hour - time_b->hour)*60 + (time_a->min - time_b->min));
 }
 
-int validate_str_format(const char* str)
+int compare_date(const void* a, const void* b)
+{
+    Date* date_a = (Date*)a;
+    Date* date_b = (Date*)b;
+    
+    return ((date_a->year - date_b->year)*365 + (date_a->month -
+                date_b->month)*31 + (date_a->day - date_b->day));
+}
+
+int validate_time_format(const char* str)
 {
     int length = strlen(str);
     char msg[MSG_MAXLEN];
@@ -174,19 +183,57 @@ int validate_str_format(const char* str)
     
     if(g_verbose){
         snprintf(msg, sizeof(msg), "SUCCESS: str is valid");
-        printf(GREEN "[%-20s] %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] %s\n" RESET, __func__, msg);
     }
     return 0;
 error_handling:
-    fprintf(stderr, RED "[%-20s] ERROR: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
+}
+
+int validate_date_format(const char* str)
+{
+    int length = strlen(str);
+    char msg[MSG_MAXLEN];
+    if(length == 2 || length == 1){
+        if(!str_is_digit(str)){
+            snprintf(msg, sizeof(msg), "invalid format: %s", str);
+            goto error_handling;
+        }
+    } else if (length == 5 || length == 10) {
+        if(str[2] != '.' || (length == 10 && str[5] != '.')){
+            snprintf(msg, sizeof(msg), "invalid format: %s", str);
+            goto error_handling;
+        }
+        for(int i=0; i<length; i++){
+            if(i == 2 || i == 5) continue;
+            if(!ch_is_digit(str[i])) {
+                snprintf(msg, sizeof(msg), "invalid format: %s", str);
+                goto error_handling;
+            }
+        }
+    } else {
+        if(length > 10) snprintf(msg, sizeof(msg), "string is too long");
+        else snprintf(msg, sizeof(msg), "invalid format: %s", str);
+        goto error_handling;
+    } 
+    
+    if(g_verbose){
+        snprintf(msg, sizeof(msg), "SUCCESS: str is valid");
+        printf(GREEN "[%-30s] %s\n" RESET, __func__, msg);
+    }
+    return 0;
+error_handling:
+    fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
+    return 1;
+
 }
 
 Time str_to_time(const char* str){
     Time time;
     char msg[MSG_MAXLEN];
     int length = strlen(str);
-    if(validate_str_format(str) == 0){
+    if(validate_time_format(str) == 0){
         switch(length){
             case 1:
                 time.hour = str[0]-'0';
@@ -220,7 +267,7 @@ Time str_to_time(const char* str){
 
     if(g_verbose){
         snprintf(msg, sizeof(msg), "%02d:%02d", time.hour, time.min);
-        printf(GREEN "[%-20s] SUCCESS: %s\n" RESET, __func__, msg);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
     return time;
 
@@ -229,9 +276,69 @@ error_handling:
     time.hour = -1;
     time.min = -1;
 
-    fprintf(stderr, RED "[%-20s] WARNING: %s\n" RESET, __func__, msg); 
+    fprintf(stderr, YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg); 
     return time;
 }
+
+Date str_to_date(const char* str){
+    Date date = get_date_today(), today = get_date_today();
+    char msg[MSG_MAXLEN];
+    int length = strlen(str);
+
+    if(validate_date_format(str) != 0){
+        snprintf(msg, sizeof(msg), "date format is INVALID: %s", str);
+        goto error_handling;
+    }    
+
+    switch(length){
+        case 1:
+            date.day = str[0]-'0';
+            if(compare_date(&date, &today) < 0) date.month++;
+            if(date.month > 12) date.year++;
+            break;
+        case 2:
+            date.day = (str[0]-'0')*10 + (str[1]-'0');
+            if(compare_date(&date, &today) < 0) date.month++;
+            if(date.month > 12) date.year++;
+            break;
+        case 5:
+            date.day = (str[0]-'0')*10 + (str[1]-'0');
+            date.month = (str[3]-'0')*10 + (str[4]-'0');
+            if(compare_date(&date, &today) < 0) date.year++;
+            break;
+        case 10:
+            date.day = (str[0]-'0')*10 + (str[1]-'0');
+            date.month = (str[3]-'0')*10 + (str[4]-'0');
+            int tens = 1000;
+            date.year = 0;
+            for(int i = 0; i < 4; i++){
+                date.year += (str[6+i] - '0') * tens;
+                tens /= 10;
+            } 
+    }
+
+    if(validate_date(date) != 0){
+        snprintf(msg, sizeof(msg), "date is INVALID: %s", str);
+        goto error_handling;
+    }
+
+    if(g_verbose){
+        snprintf(msg, sizeof(msg), "%02d.%02d.%04d", date.day, date.month, date.year);
+        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
+    }
+    return date;
+
+error_handling:
+    //fallback:
+    date.day = -1;
+    date.month = -1;
+    date.year = -1;
+
+    fprintf(stderr, YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg); 
+    return date;
+}
+
+
 
 long str_to_uint(const char* str)
 {
@@ -263,3 +370,4 @@ Date get_date_today(void)
    struct tm* now = localtime(&(time_t){time(NULL)}) ;
     return (Date) {.day = now->tm_mday, .month = now->tm_mon+1, .year = now->tm_year+1900};
 }
+

@@ -1,5 +1,5 @@
 
-TMCLI_VERSION = v0.1.0
+TMCLI_VERSION = v0.2.0
 TMCLI_AUTHOR = reverie11
 
 TARGET = tmcli
@@ -11,9 +11,8 @@ BIN_DIR = build/bin
 FINAL_TARGET = $(BIN_DIR)/$(TARGET)
 
 CC = gcc
-STATE_FILE ?= state.dat
 CFLAGS = -Wall -Wextra -g -I$(INC_DIR)
-CFLAGS += -DSTATE_FILE='"$(STATE_FILE)"'
+CFLAGS += -DSTATE_DIR='"$(STATE_DIR)"'
 CFLAGS += -DVERSION='"$(TMCLI_VERSION)"'
 CFLAGS += -DAUTHOR='"$(TMCLI_AUTHOR)"'
 

@@ -52,15 +52,22 @@ int TM_get_curr_taskid(TaskManager* tm);
 
 /******************************** STATE **************************************/
 /**
- * @brief
+ * @brief TM_save_state.
  */
 int TM_save_state(TaskManager* tm);
+int TM_save_state_to_date(TaskManager* tm, const Date target_date);
 
 /**
- * @brief
+ * @brief TM_restore_state.
+ * This functions read the previously saved state and restore it by dynamically
+ * allocating memory for the tasks. This function is NOT intended to be called
+ * multiple times because it does NOT deallocate the tasks on previous restore.
+ * Use TM_refresh_state instead.
  */
 int TM_restore_state(TaskManager* tm);
+int TM_restore_state_from_date(TaskManager* tm, const Date target_date);
 
+int TM_refresh_state(TaskManager* tm);
 /**
  * @brief
  */

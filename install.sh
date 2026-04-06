@@ -11,9 +11,9 @@ mkdir -p $COMPLETION_DIR
 
 make clean
 if command -v bear &>/dev/null; then
-    bear -- make STATE_FILE=$STATE_DIR/state.dat
+    bear -- make STATE_DIR=$STATE_DIR
 else
-    make STATE_FILE=$STATE_DIR/state.dat
+    make STATE_FILE=$STATE_DIR
 fi
 
 cp ./build/bin/tmcli $BIN_DIR/tmcli

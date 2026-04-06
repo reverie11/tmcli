@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "colors.h"
 #include "tmcli.h"
+#include "types.h"
 #include "utils.h"
 
 #ifndef VERSION
@@ -83,7 +83,7 @@ void print_completion(int argc, char** argv) {
     TM_state tms = {.tm.n_active_tasks = 0};
 
     // quick fetch state
-    FILE *fp = fopen(STATE_FILE, "r");
+    FILE *fp = fopen(STATE_DIR "/state.date", "r");
     if(fp != NULL){
         size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
         fclose(fp);
@@ -140,8 +140,8 @@ int main(int argc, char** argv)
     }
 
     TaskManager tm;
+    bzero(&tm, sizeof(TaskManager));
     TM_init(&tm);
-    TM_restore_state(&tm);
 
     char* cmd = argv[optind++];
     int n_args = argc - optind;
@@ -149,6 +149,24 @@ int main(int argc, char** argv)
     if(cmd == NULL){
         goto error_handling;
     }
+    
+    if(strcmp(cmd, "date") == 0){
+        if(n_args < 1) goto error_handling;
+        char* arg1 = argv[optind++];
+        Date d = str_to_date(arg1);
+        if(d.day != -1) 
+        {
+            cmd = argv[optind++];
+            tm.task_date = d;
+            n_args = argc - optind;
+        }
+        else {
+            snprintf(msg, sizeof(msg), "fail");
+            goto error_handling;
+        }
+     }
+
+    TM_restore_state(&tm);
 
     if(strcmp(cmd, CMD_STR[ADD]) == 0){
         if(n_args < 3) goto error_handling;
@@ -158,6 +176,9 @@ int main(int argc, char** argv)
         int id = TM_create_task(&tm, str_to_time(start), str_to_time(end),
                 name);
         TM_sort_tasks(&tm);
+        TM_save_state(&tm);
+        TM_refresh_state(&tm);
+
         TM_print_all_tasks_highlight(&tm, 0, id);
         TM_save_state(&tm);
 
@@ -195,7 +216,7 @@ int main(int argc, char** argv)
             }
             TM_sort_tasks(&tm);
             TM_save_state(&tm);
-            TM_restore_state(&tm);
+            TM_refresh_state(&tm);
         }
         TM_print_all_tasks_highlight(&tm, 0, id);
 
@@ -217,7 +238,8 @@ int main(int argc, char** argv)
 
         TM_sort_tasks(&tm);
         TM_save_state(&tm);
-        TM_restore_state(&tm);
+        TM_refresh_state(&tm);
+
         TM_print_all_tasks_highlight(&tm, 0, id);
 
     } else if(strcmp(cmd, CMD_STR[SHW]) == 0){
@@ -231,14 +253,17 @@ int main(int argc, char** argv)
         }
 
     } else if(strcmp(cmd, CMD_STR[EXP]) == 0){
-        int status = TM_export_to_ICS(&tm);
-        if(status == -1){
+        if(TM_export_to_ICS(&tm) != 0){
             snprintf(msg, sizeof(msg), "export failed");
-        } else snprintf(msg, sizeof(msg), "tasks exported to ./%s", EXPORT_FILE);
+            goto error_handling;
+        } 
+        snprintf(msg, sizeof(msg), "tasks exported to ./%s", EXPORT_FILE);
         fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
 
-    } else if(strcmp(cmd, "reset") == 0){
-        unlink(STATE_FILE);
+    } else if(strcmp(cmd, CMD_STR[RST]) == 0){
+        if (TM_reset_state(&tm) != 0){
+            snprintf(msg, sizeof(msg), "reset failed");
+        }
         snprintf(msg, sizeof(msg), "task list reseted");
         fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
 
@@ -250,7 +275,8 @@ int main(int argc, char** argv)
     return 0;
 
 error_handling:
-    print_help();
+    if(g_verbose) fprintf(stdout, RED "ERROR: " RESET "%s\n", msg);
+    else print_help();
     TM_delete_all_tasks(&tm);
     return 1;
 }

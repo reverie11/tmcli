@@ -12,8 +12,8 @@
 
 #define EXPORT_FILE "tmcli_export.ics"
 
-#ifndef STATE_FILE
-#define STATE_FILE 
+#ifndef STATE_DIR
+#define STATE_DIR
 #endif
 
 typedef struct time{
