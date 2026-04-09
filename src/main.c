@@ -99,7 +99,8 @@ void print_completion(int argc, char** argv ) {
     int ind = 0;
     
     if(argc >= 1 && strcmp(argv[0], CMD_STR[_ON]) == 0){
-        if(argc == 1) printf("%02d.%02d.%04d", target_date.day, target_date.month, target_date.year);
+        if(argc == 1) printf("%02d.%02d.%04d", target_date.day,
+                target_date.month, target_date.year);
         if(argc >= 2 && validate_date(str_to_date(argv[1]) ) == 0 ) {
             target_date = str_to_date(argv[1]);
             ind+=2;
@@ -210,16 +211,16 @@ int main(int argc, char** argv)
 
         char* arg1 = argv[optind++];
         Date d = str_to_date(arg1);
-        if(d.day != -1) 
-        {
-            cmd = argv[optind++];
-            tm.task_date = d;
-            n_args = argc - optind;
-        }
-        else {
+
+        if (d.day == -1){
             snprintf(msg, sizeof(msg), "fail");
             goto error_handling;
         }
+
+        cmd = argv[optind++];
+        tm.task_date = d;
+        n_args = argc - optind;
+        if(cmd == NULL) cmd = CMD_STR[SHW];
      }
 
     TM_restore_state(&tm);
@@ -234,8 +235,7 @@ int main(int argc, char** argv)
         char* start = argv[optind++];
         char* end = argv[optind++];
         char* name = argv[optind++];
-        int id = TM_create_task(&tm, str_to_time(start), str_to_time(end),
-                name);
+        int id = TM_create_task(&tm, str_to_time(start), str_to_time(end), name);
         TM_sort_tasks(&tm);
         TM_save_state(&tm);
         TM_refresh_state(&tm);
