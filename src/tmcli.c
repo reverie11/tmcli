@@ -615,7 +615,10 @@ int TM_export_to_ICS(TaskManager* tm)
 
     char *ical_string = icalcomponent_as_ical_string(c);
 
-    FILE *fp = fopen(EXPORT_FILE, "w");
+    char filename[32];
+    snprintf(filename, sizeof(filename), EXPORT_FILE, tm->task_date.day,
+           tm->task_date.month, tm->task_date.year);
+    FILE *fp = fopen(filename, "w");
     if(!fp) {
         snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
         goto error_handling;
@@ -634,7 +637,7 @@ int TM_export_to_ICS(TaskManager* tm)
     }
 
     if(g_verbose){
-        snprintf(msg, sizeof(msg), "tasks exported to " EXPORT_FILE);
+        snprintf(msg, sizeof(msg), "tasks exported to %s", filename);
         printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
     }
     return 0;

@@ -341,7 +341,8 @@ int main(int argc, char** argv)
             snprintf(msg, sizeof(msg), "export failed");
             goto error_handling;
         } 
-        snprintf(msg, sizeof(msg), "tasks exported to ./%s", EXPORT_FILE);
+        snprintf(msg, sizeof(msg), "tasks exported to ./" EXPORT_FILE,
+            tm.task_date.day, tm.task_date.month, tm.task_date.year);
         fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
 
     // reset

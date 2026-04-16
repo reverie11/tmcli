@@ -10,7 +10,7 @@
 
 #define NTASKS_MAX 10
 
-#define EXPORT_FILE "tmcli_export.ics"
+#define EXPORT_FILE "tmcli-export-%02d%02d%04d.ics"
 
 #ifndef STATE_DIR
 #define STATE_DIR
