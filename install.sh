@@ -13,7 +13,7 @@ make clean
 if command -v bear &>/dev/null; then
     bear -- make STATE_DIR=$STATE_DIR
 else
-    make STATE_FILE=$STATE_DIR
+    make STATE_DIR=$STATE_DIR
 fi
 
 cp ./build/bin/tmcli $BIN_DIR/tmcli
