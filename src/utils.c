@@ -189,6 +189,14 @@ int compare_date(const void* a, const void* b)
     return ((date_a->year - date_b->year)*365 + (date_a->month - date_b->month)*31 + (date_a->day - date_b->day));
 }
 
+long compare_timestamp(const void* a, const void* b)
+{
+    Timestamp* ts_a = (Timestamp*)a;
+    Timestamp* ts_b = (Timestamp*)b;
+
+    return ( (compare_date(&ts_a->date, &ts_b->date)*24*60)+(compare_time(&ts_a->time, &ts_b->time)) );
+}
+
 int validate_time_format(const char* str)
 {
     int length = strlen(str);

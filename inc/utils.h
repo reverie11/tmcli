@@ -75,6 +75,11 @@ int compare_time(const void* a, const void* b);
  * @notes is not reliable for calculating days between dates. Use calculate_task_duration_in_days instead.
  */
 int compare_date(const void* a, const void* b);
+
+/**
+ * @brief compare_timestamp
+ */
+long compare_timestamp(const void* a, const void* b);
 /******************************** CONVERSION *********************************/
 /**
  * @brief str_to_time.

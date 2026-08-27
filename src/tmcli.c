@@ -106,8 +106,16 @@ void TM_print_all_tasks_highlight(TaskManager* tm, int mode, int highlight_id)
 {
     char buf[LINE_MAXLEN-4];
     char title[32];
+    const char* label_ytd = "  (YTD)";
+    const char* label_tmr = "  (TMR)";
+    const char* label_dmy = "%02d.%02d.%04d";
+    const char* label_nul = "          ";
+    char end_label[11]    = "          ", 
+         start_label[11]  = "          "; 
     Date today = get_date_today();
     Task* t;
+    int diff_date = compare_date(&tm->task_date, &today);
+    int diff_start = 0, diff_end =  0;
 
     switch(mode){
         default:
@@ -121,11 +129,19 @@ void TM_print_all_tasks_highlight(TaskManager* tm, int mode, int highlight_id)
 
 mode_0:
     // header
-    if(compare_date(&tm->task_date, &today) == 0) 
+    if(diff_date == 0){
         snprintf(title, sizeof(title), " %02d.%02d.%04d (Today) ", 
-            tm->task_date.day, tm->task_date.month, tm->task_date.year);
-    else snprintf(title, sizeof(title), " %02d.%02d.%04d ", 
-            tm->task_date.day, tm->task_date.month, tm->task_date.year);
+                 tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    } else if(diff_date == -1){
+        snprintf(title, sizeof(title), " %02d.%02d.%04d (Yesterday) ", 
+                 tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    } else if(diff_date == 1){
+        snprintf(title, sizeof(title), " %02d.%02d.%04d (Tomorrow) ", 
+                 tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    } else {
+        snprintf(title, sizeof(title), " %02d.%02d.%04d ", 
+                 tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    }
     printf(COLOR_CYAN);
     for(int i = 0; i < LINE_MAXLEN/2 - (int)strlen(title)/2; i++) printf("-");
     printf("%s", title);
@@ -137,20 +153,43 @@ mode_0:
     {
         t = tm->task_list[i];
         if(t != NULL){
-            if(strlen(t->name)<=32) snprintf(buf, sizeof(buf), 
-                    "%02d:%02d - %02d:%02d    %.32s", 
-                    t->start.time.hour, t->start.time.min,
-                    t->end.time.hour, t->end.time.min,
-                    t->name);
-            else snprintf(buf, sizeof(buf), 
-                    "%02d:%02d - %02d:%02d    %.32s...", 
-                    t->start.time.hour, t->start.time.min,
-                    t->end.time.hour, t->end.time.min,
-                    t->name);
+            diff_start = compare_date(&t->start.date, &today); 
+            if (diff_start == -1){
+                snprintf(start_label, sizeof(start_label), "%s", label_ytd);
+            } else if (diff_start == 1){
+                snprintf(start_label, sizeof(start_label), "%s", label_tmr);
+            } else if (diff_start != 0){
+                const char* label_dmy = "%02d.%02d.%04d";
+                snprintf(start_label, sizeof(start_label), label_dmy, t->start.date.day, t->start.date.month, t->start.date.year);
+            } 
+
+            diff_end = compare_date(&t->end.date, &today); 
+            if (diff_end == -1){
+                snprintf(end_label, sizeof(end_label), "%s", label_ytd);
+            } else if (diff_end == 1){
+                snprintf(end_label, sizeof(end_label), "%s", label_tmr);
+            } else if (diff_end != 0){
+                snprintf(end_label, sizeof(end_label), label_dmy, t->end.date.day, t->end.date.month, t->end.date.year);
+            } 
+            if(strlen(t->name)<=32){
+                snprintf(buf, sizeof(buf), "    %02d:%02d   -   %02d:%02d     %.32s", 
+                         t->start.time.hour, t->start.time.min,
+                         t->end.time.hour, t->end.time.min,
+                         t->name);
+            } else {
+                snprintf(buf, sizeof(buf), "    %02d:%02d   -   %02d:%02d     %.32s...", 
+                         t->start.time.hour, t->start.time.min,
+                         t->end.time.hour, t->end.time.min,
+                         t->name);
+            }
             if(highlight_id == -1 || t->id != highlight_id) printf(COLOR_BLUE);
             else if(t->id == highlight_id) printf(COLOR_PURPLE);
             printf("%-*s [%d]\n", (int)sizeof(buf), buf, t->order_id);
+            if(diff_start || diff_end) printf("  %-10s  %-10s\n", start_label, end_label);
             printf(COLOR_RESET);
+            diff_start = 0; diff_end = 0;
+            snprintf(start_label, 10, "%s", label_nul);
+            snprintf(end_label, 10, "%s", label_nul);
         }
     }
     printf("\n");
@@ -618,12 +657,15 @@ error_handling:
 int TM_get_curr_taskid(TaskManager* tm)
 {
    struct tm* curr_time = localtime(&(time_t){time(NULL)}) ;
-   Time now = { .hour = curr_time->tm_hour, .min = curr_time->tm_min};
+   Timestamp now = { 
+        .time.hour = curr_time->tm_hour, .time.min = curr_time->tm_min, 
+        .date.day = curr_time->tm_mday, .date.month = curr_time->tm_mon+1, .date.year = (curr_time->tm_year+1900)
+   };
 
    for(int i = 0; i < tm->n_active_tasks; i++){
         Task* task = tm->task_list[i];
-        int after_start = compare_time(&now, &task->start); 
-        int before_end = compare_time(&now, &task->end); 
+        long after_start = compare_timestamp(&now, &task->start); 
+        long before_end = compare_timestamp(&now, &task->end); 
         if(after_start >= 0 && before_end < 0) return task->id;
    }
    return -1;
