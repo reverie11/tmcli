@@ -234,7 +234,7 @@ int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start)
     task->start.time = start;
     if(validate_task_time(task) != 0) {
         task->start.time= fallback;
-        log_error("[task %0d] invalid starttime", task_order_id);
+        log_error("[task %0d] invalid start.time", task_order_id);
         return 1;
     }    
     task->duration_h = calculate_task_duration(task);
@@ -250,23 +250,63 @@ int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end)
     Time fallback = task->end.time;
     if(task == NULL) {
         log_error("[task %0d] task doesnt exist", task_order_id);
-        goto error_handling;
+        return  1;
     }
 
     task->end.time = end;
     if(validate_task_time(task) != 0) {
         task->end.time = fallback;
-        log_error("[task %0d] invalid endtime", task_order_id);
-        goto error_handling;
-    }    
+        log_error("[task %0d] invalid end.time", task_order_id);
+        return 1;
+    }
     task->duration_h = calculate_task_duration(task);
 
     log_ok("[task %02d] task modified\n", task_order_id);
 
     return 0;
-    
-error_handling:
-    return 1;
+}
+
+int TM_modify_task_start_date(TaskManager* tm, int task_order_id, Date start)
+{
+    Task* task = tm->task_list[task_order_id];
+    Date fallback = task->start.date;
+    if(task == NULL) {
+        log_error("[task %0d] task doesnt exist", task_order_id);
+        return 1;
+    }
+
+    task->start.date = start;
+    if(validate_task_time(task) != 0) {
+        task->start.date= fallback;
+        log_error("[task %0d] invalid start.date", task_order_id);
+        return 1;
+    }    
+    task->duration_h = calculate_task_duration(task);
+
+    log_ok("[task %02d] task modified\n", task_order_id);
+    return 0;
+}
+
+int TM_modify_task_end_date(TaskManager* tm, int task_order_id, Date end)
+{
+    Task* task = tm->task_list[task_order_id];
+    Date fallback = task->end.date;
+    if(task == NULL) {
+        log_error("[task %0d] task doesnt exist", task_order_id);
+        return 1;
+    }
+
+    task->end.date = end;
+    if(validate_task_time(task) != 0) {
+        task->end.date = fallback;
+        log_error("[task %0d] invalid end.date", task_order_id);
+        return 1;
+    }
+    task->duration_h = calculate_task_duration(task);
+
+    log_ok("[task %02d] task modified\n", task_order_id);
+
+    return 0;
 }
 
 int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name)

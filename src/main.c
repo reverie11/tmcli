@@ -302,6 +302,10 @@ int main(int argc, char** argv)
             } else if(strcmp(object, OBJ_STR[END]) == 0 || 
                       strcmp(object, OBJ_STR[END_TIME]) == 0){
                 TM_modify_task_end(&tm, order_id, str_to_time(value));
+            } else if(strcmp(object, OBJ_STR[START_DATE]) == 0){
+                TM_modify_task_start_date(&tm, order_id, str_to_date(value));
+            } else if(strcmp(object, OBJ_STR[END_DATE]) == 0){
+                TM_modify_task_end_date(&tm, order_id, str_to_date(value));
             } else if(strcmp(object, OBJ_STR[NAME]) == 0){
                 TM_modify_task_name(&tm, order_id, value);
             }
