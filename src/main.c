@@ -3,7 +3,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include "colors.h"
+#include "log.h"
 #include "tmcli.h"
 #include "types.h"
 #include "utils.h"
@@ -41,15 +41,23 @@ static const char *CMD_STR[N_CMDS] = {
 
 typedef enum{
     START, 
+    START_TIME, 
+    START_DATE, 
     END,
+    END_TIME,
+    END_DATE,
     NAME,
     N_OBJS,
 } Obj_list;
 
 static const char *OBJ_STR[N_CMDS] = {
-    [START] = "start",
-    [END]   = "end",
-    [NAME]  = "name",
+    [START]         = "start",
+    [START_TIME]    = "start.time",
+    [START_DATE]    = "start.date",
+    [END]           = "end",
+    [END_TIME]      = "end.time",
+    [END_DATE]      = "end.date",
+    [NAME]          = "name",
 };
 
 void print_help() {
@@ -65,7 +73,7 @@ void print_help() {
         "\n"
         "COMMAND\n"
         "  add      STRT ENDT NAME    Add a new task with start-, endtime, and name\n"
-        "  modify   T_ID OBJT TIME    Modify the attribute object of an existing task of specified id\n"
+        "  modify   T_ID OBJT VALUE   Modify the object value of an existing task of specified id\n"
         "  move     T_ID      TIME    Move anexisting task of a specified id to specified time\n"
         "  delete   T_ID              Delete an existing task of a specified id\n"
         "  show                       Show all exisiting tasks\n"
@@ -73,8 +81,10 @@ void print_help() {
         "  reset                      Reset task-list\n"
         "\n"
         "OBJECTS\n"
-        "  start                      task's starttime\n"
-        "  end                        task's endtime\n"
+        "  start[.time]               task's start.time\n"
+        "  start.date                 task's start.date\n"
+        "  end[.time]                 task's end.time\n"
+        "  end.date                   task's end.date\n"
         "  name                       task's name\n"
         "\n"
         "FORMAT\n"
@@ -185,8 +195,8 @@ int main(int argc, char** argv)
         case '?':
         default:
             snprintf(msg, sizeof(msg), "unknown options: -%c", optopt);
-            fprintf(stdout, RED "ERROR: " RESET "%s\n", msg);
-            fprintf(stdout, "try passing --help instead\n");
+            log_error("%s\n", msg);
+            fprintf(stderr, "try passing --help instead\n");
             return 1;
         }
     }
@@ -213,7 +223,7 @@ int main(int argc, char** argv)
         Date d = str_to_date(arg1);
 
         if (d.day == -1){
-            snprintf(msg, sizeof(msg), "fail");
+            snprintf(msg, sizeof(msg), "str_do_date fail");
             goto error_handling;
         }
 
@@ -286,9 +296,11 @@ int main(int argc, char** argv)
             TM_modify_task_name(&tm, order_id, value);
             TM_save_state(&tm);
         } else {
-            if(strcmp(object, OBJ_STR[START]) == 0){
+            if(strcmp(object, OBJ_STR[START]) == 0 ||
+               strcmp(object, OBJ_STR[START_TIME]) == 0){
                 TM_modify_task_start(&tm, order_id, str_to_time(value));
-            } else if(strcmp(object, OBJ_STR[END]) == 0){
+            } else if(strcmp(object, OBJ_STR[END]) == 0 || 
+                      strcmp(object, OBJ_STR[END_TIME]) == 0){
                 TM_modify_task_end(&tm, order_id, str_to_time(value));
             } else if(strcmp(object, OBJ_STR[NAME]) == 0){
                 TM_modify_task_name(&tm, order_id, value);
@@ -345,7 +357,7 @@ int main(int argc, char** argv)
         } 
         snprintf(msg, sizeof(msg), "tasks exported to ./" EXPORT_FILE,
             tm.task_date.day, tm.task_date.month, tm.task_date.year);
-        fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
+        log_info("%s\n", msg);
 
     // reset
     } else if(strcmp(cmd, CMD_STR[RST]) == 0){
@@ -353,7 +365,7 @@ int main(int argc, char** argv)
             snprintf(msg, sizeof(msg), "reset failed");
         }
         snprintf(msg, sizeof(msg), "task list reseted");
-        fprintf(stdout, CYAN "INFO: " RESET "%s\n", msg);
+        log_info("%s\n", msg);
 
     } else {
         snprintf(msg, sizeof(msg), "unknown command: %s", cmd);
@@ -364,8 +376,8 @@ int main(int argc, char** argv)
     return 0;
 
 error_handling:
-    fprintf(stdout, RED "ERROR: " RESET "%s\n", msg);
-    fprintf(stdout, "try passing --help instead\n");
+    log_error("%s\n", msg);
+    fprintf(stderr, "try passing --help instead\n");
     TM_delete_all_tasks(&tm);
     return 1;
 }

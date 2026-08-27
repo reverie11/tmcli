@@ -14,21 +14,20 @@
 #include "tmcli.h"
 #include "types.h"
 #include "utils.h"
+#include "log.h"
 
 bool g_verbose = 1;
 
 int TM_init(TaskManager* tm)
 {
-    char msg[MSG_MAXLEN];
     
     if(!tm) {
-        snprintf(msg, sizeof(msg), "Initializing a nullpointer");
+        log_error("Initializing a nullpointer");
         goto error_handling;
     }
 
     if(tm->initialized){
-        snprintf(msg, sizeof(msg), "Reinitialization detected");
-        fprintf(stderr, YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg); 
+        log_warn("Reinitialization detected");
     }
 
     for(int i = 0; i < NTASKS_MAX; i++){
@@ -39,28 +38,23 @@ int TM_init(TaskManager* tm)
     tm->n_created_tasks = 0;
     tm->initialized = 1;
 
-    if(g_verbose){
-        snprintf(msg, sizeof(msg), "TaskManager iniatialized");
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("TaskManager initialized");
 
     return 0;
 
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
 int TM_create_task(TaskManager* tm, const Time start, const Time end, const char* name)
 {
-    char msg[MSG_MAXLEN];
     if(!tm->initialized){
         TM_init(tm);
     }
 
     Task* t = malloc(sizeof(Task));
     if(t == NULL){
-        snprintf(msg, sizeof(msg), "malloc() failed");
+        log_error("malloc() failed");
         goto error_handling;
     }
 
@@ -75,7 +69,7 @@ int TM_create_task(TaskManager* tm, const Time start, const Time end, const char
 
     if(validate_task_time(t) != 0){
         free(t);
-        snprintf(msg, sizeof(msg), "task time invalid");
+        log_error( "task time invalid");
         goto error_handling;
     }
 
@@ -83,14 +77,10 @@ int TM_create_task(TaskManager* tm, const Time start, const Time end, const char
     tm->n_created_tasks++;
     tm->n_active_tasks++;
 
-    if(g_verbose){
-        snprintf(msg, sizeof(msg), "task created with id=%d", t->id);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("task created with id=%d", t->id);
     return t->id;
 
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return -1;
 }
 
@@ -136,11 +126,11 @@ mode_0:
             tm->task_date.day, tm->task_date.month, tm->task_date.year);
     else snprintf(title, sizeof(title), " %02d.%02d.%04d ", 
             tm->task_date.day, tm->task_date.month, tm->task_date.year);
-    printf(CYAN);
+    printf(COLOR_CYAN);
     for(int i = 0; i < LINE_MAXLEN/2 - (int)strlen(title)/2; i++) printf("-");
     printf("%s", title);
     for(int i = 0; i < LINE_MAXLEN/2 - (int)strlen(title)/2; i++) printf("-");
-    printf("\n" RESET);
+    printf("\n" COLOR_RESET);
 
     // body
     for(int i=0; i < tm->n_active_tasks; i++)
@@ -157,10 +147,10 @@ mode_0:
                     t->start.time.hour, t->start.time.min,
                     t->end.time.hour, t->end.time.min,
                     t->name);
-            if(highlight_id == -1 || t->id != highlight_id) printf(BLUE);
-            else if(t->id == highlight_id) printf(PURPLE);
+            if(highlight_id == -1 || t->id != highlight_id) printf(COLOR_BLUE);
+            else if(t->id == highlight_id) printf(COLOR_PURPLE);
             printf("%-*s [%d]\n", (int)sizeof(buf), buf, t->order_id);
-            printf(RESET);
+            printf(COLOR_RESET);
         }
     }
     printf("\n");
@@ -186,10 +176,8 @@ void TM_print_self(TaskManager* tm)
 
 int TM_delete_task(TaskManager* tm, int task_order_id)
 {
-    char msg[MSG_MAXLEN];
-
     if(tm->task_list[task_order_id] == NULL){
-        snprintf(msg, sizeof(msg), "[task %02d] task doesnt exist", task_order_id);
+        log_error("[task %02d] task doesnt exist", task_order_id);
         goto error_handling;
     } 
 
@@ -198,14 +186,10 @@ int TM_delete_task(TaskManager* tm, int task_order_id)
     tm->task_list[task_order_id] = NULL;
     tm->n_active_tasks--;
 
-    if(g_verbose){
-        snprintf(msg, sizeof(msg), "[task %02d] task deleted (id=%d)", task_order_id, task_id);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("[task %02d] task deleted (id=%d)", task_order_id, task_id);
     return 0;
 
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -231,117 +215,84 @@ int TM_delete_all_tasks(TaskManager* tm)
             int offset = strlen(msg);
             snprintf(msg+offset, sizeof(msg)-offset+i, "%d ", failed_list[i]);
         }
-        goto error_handling;
+        log_error("%s", msg);
+        return 1;
     }
 
     return 0;
-error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
-    return 1;
 }
 
 int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start)
 {
-    char msg[MSG_MAXLEN];
     Task* task = tm->task_list[task_order_id];
     Time fallback = task->start.time;
     if(task == NULL) {
-        snprintf(msg, sizeof(msg), "[task %0d] task doesnt exist", 
-                task_order_id);
-        goto error_handling;
+        log_error("[task %0d] task doesnt exist", task_order_id);
+        return 1;
     }
 
     task->start.time = start;
     if(validate_task_time(task) != 0) {
         task->start.time= fallback;
-        snprintf(msg, sizeof(msg), "[task %0d] invalid starttime", 
-                task_order_id);
-        goto error_handling;
+        log_error("[task %0d] invalid starttime", task_order_id);
+        return 1;
     }    
     task->duration_h = calculate_task_duration(task);
 
-    if(g_verbose) {
-        snprintf(msg, sizeof(msg), "[task %02d] task modified\n",
-                task_order_id);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
-
+    log_ok("[task %02d] task modified\n", task_order_id);
     return 0;
     
-error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
-    return 1;
 }
 
 int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end)
 {
-    char msg[MSG_MAXLEN];
     Task* task = tm->task_list[task_order_id];
     Time fallback = task->end.time;
     if(task == NULL) {
-        snprintf(msg, sizeof(msg), "[task %0d] task doesnt exist", 
-                task_order_id);
+        log_error("[task %0d] task doesnt exist", task_order_id);
         goto error_handling;
     }
 
     task->end.time = end;
     if(validate_task_time(task) != 0) {
         task->end.time = fallback;
-        snprintf(msg, sizeof(msg), "[task %0d] invalid endtime", 
-                task_order_id);
+        log_error("[task %0d] invalid endtime", task_order_id);
         goto error_handling;
     }    
     task->duration_h = calculate_task_duration(task);
 
-    if(g_verbose) {
-        snprintf(msg, sizeof(msg), "[task %02d] task modified\n",
-                task_order_id);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("[task %02d] task modified\n", task_order_id);
 
     return 0;
     
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
 int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name)
 {
-    char msg[MSG_MAXLEN];
     Task* task = tm->task_list[task_order_id];
 
     if(task == NULL) {
-        snprintf(msg, sizeof(msg), "[task %0d] task doesnt exist", 
-                task_order_id);
-        goto error_handling;
+        log_error("[task %0d] task doesnt exist", task_order_id);
+        return 1;
     }
 
     snprintf(task->name, TASKNAME_MAXLEN, "%s", name);
 
-    if(g_verbose) {
-        snprintf(msg, sizeof(msg), "[task %02d] task modified\n",
-                task_order_id);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("[task %02d] task modified\n", task_order_id);
 
     return 0;
     
-error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
-    return 1;
-
 }
 
 int TM_move_task_start(TaskManager* tm, int task_order_id, Time start)
 {
-    char msg[MSG_MAXLEN];
     Task* task = tm->task_list[task_order_id];
 
     if(task == NULL) {
-        snprintf(msg, sizeof(msg), "[task %0d] task doesnt exist", 
-                task_order_id);
-        goto error_handling;
+        log_error("[task %0d] task doesnt exist", task_order_id);
+        return 1;
     }
 
     Time end = calculate_end_time(start, task->duration_h);
@@ -356,10 +307,6 @@ int TM_move_task_start(TaskManager* tm, int task_order_id, Time start)
         TM_modify_task_start(tm, task_order_id, start);
     }
     return 0;
-
-error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
-    return 1;
 }
 
 int TM_save_state(TaskManager* tm)
@@ -370,7 +317,6 @@ int TM_save_state(TaskManager* tm)
 int TM_save_state_to_date(TaskManager* tm, const Date target_date)
 {
     TM_state tms;
-    char msg[MSG_MAXLEN];
     char state_file[PATH_MAX];
 
     snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
@@ -378,7 +324,7 @@ int TM_save_state_to_date(TaskManager* tm, const Date target_date)
 
     FILE *fp = fopen(state_file, "w");
     if(!fp) {
-        snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
+        log_error("fopen: %s", strerror(errno));
         goto error_handling;
     }
 
@@ -397,8 +343,7 @@ int TM_save_state_to_date(TaskManager* tm, const Date target_date)
     // state saving happens here
     size_t bytes = fwrite(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        snprintf(msg, sizeof(msg), "error on fwrite: %ld Bytes written"
-                "(expect=%ld)\n", bytes, sizeof(TM_state));
+        log_error("error on fwrite: %ld Bytes written (expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
 
@@ -406,8 +351,7 @@ int TM_save_state_to_date(TaskManager* tm, const Date target_date)
     fp = NULL;
 
     if(g_verbose) {
-        snprintf(msg, sizeof(msg), "current state saved");
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
+        log_ok("current state saved");
     }
 
     return 0;
@@ -416,7 +360,6 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -428,7 +371,6 @@ int TM_restore_state(TaskManager *tm)
 int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
 {
     TM_state tms;
-    char msg[MSG_MAXLEN];
     char state_file[PATH_MAX];
 
     snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
@@ -437,17 +379,15 @@ int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
     FILE *fp = fopen(state_file, "r");
     if(!fp) {
         if(g_verbose) {
-            snprintf(msg, sizeof(msg), "no state to restore");
-            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
-            snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
-            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+            log_warn("no state to restore");
+            log_warn( "fopen: %s", strerror(errno));
         }
         return 1;
     }
 
     size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        snprintf(msg, sizeof(msg), "error on fwrite: %ld Bytes written"
+        log_error("error on fwrite: %ld Bytes written"
                 "(expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
@@ -461,7 +401,7 @@ int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
         int order_id = tms.tm_task[i].order_id;
 
         if(t == NULL){
-            snprintf(msg, sizeof(msg), "malloc() failed");
+            log_error("malloc() failed");
             goto error_handling;
         } 
 
@@ -476,8 +416,7 @@ int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
     }
 
     if(g_verbose) {
-        snprintf(msg, sizeof(msg), "last state restored");
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
+        log_ok("last state restored");
     }
 
     return 0;
@@ -486,7 +425,6 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
@@ -494,7 +432,6 @@ error_handling:
 int TM_refresh_state(TaskManager* tm)
 {
     TM_state tms;
-    char msg[MSG_MAXLEN];
     char state_file[PATH_MAX];
 
     snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
@@ -503,18 +440,15 @@ int TM_refresh_state(TaskManager* tm)
     FILE *fp = fopen(state_file, "r");
     if(!fp) {
         if(g_verbose) {
-            snprintf(msg, sizeof(msg), "no state to restore");
-            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
-            snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
-            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+            log_warn("no state to restore");
+            log_warn("fopen: %s", strerror(errno));
         }
         return 1;
     }
 
     size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        snprintf(msg, sizeof(msg), "error on fwrite: %ld Bytes written"
-                "(expect=%ld)\n", bytes, sizeof(TM_state));
+        log_error("error on fwrite: %ld Bytes written (expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
     fclose(fp);
@@ -528,7 +462,7 @@ int TM_refresh_state(TaskManager* tm)
         int order_id = tms.tm_task[i].order_id;
 
         if(t == NULL){
-            snprintf(msg, sizeof(msg), "malloc() failed");
+            log_error("malloc() failed");
             goto error_handling;
         } 
 
@@ -543,8 +477,7 @@ int TM_refresh_state(TaskManager* tm)
     }
 
     if(g_verbose) {
-        snprintf(msg, sizeof(msg), "last state refreshed");
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
+        log_ok("last state refreshed");
     }
     return 0;
 
@@ -552,21 +485,18 @@ error_handling:
     if(fp != NULL) {
         fclose(fp);
     }
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
 
 int TM_reset_state(TaskManager* tm)
 {
-    char msg[MSG_MAXLEN];
     char state_file[PATH_MAX];
     snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
             tm->task_date.day, tm->task_date.month, tm->task_date.year);
     if(unlink(state_file) != 0){
         if(g_verbose) {
-            snprintf(msg, sizeof(msg), "unlink: %s", strerror(errno));
-            printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+            log_warn("unlink: %s", strerror(errno));
         }
         return 1;
     }
@@ -582,7 +512,6 @@ int TM_sort_tasks(TaskManager* tm)
 
 int TM_export_to_ICS(TaskManager* tm)
 {
-    char msg[MSG_MAXLEN];
     icaltimetype today = {
         .year = tm->task_date.year,
         .month = tm->task_date.month,
@@ -621,7 +550,7 @@ int TM_export_to_ICS(TaskManager* tm)
            tm->task_date.month, tm->task_date.year);
     FILE *fp = fopen(filename, "w");
     if(!fp) {
-        snprintf(msg, sizeof(msg), "fopen: %s", strerror(errno));
+        log_error("fopen: %s", strerror(errno));
         goto error_handling;
     }
 
@@ -633,20 +562,16 @@ int TM_export_to_ICS(TaskManager* tm)
     icalmemory_free_ring();
 
     if(fclose(fp) == EOF) {
-        snprintf(msg, sizeof(msg), "fclose: %s", strerror(errno));
+        log_error("fclose: %s", strerror(errno));
         goto error_handling;
     }
 
-    if(g_verbose){
-        snprintf(msg, sizeof(msg), "tasks exported to %s", filename);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("tasks exported to %s", filename);
     return 0;
 
 error_handling:
     if(fp != NULL) fclose(fp);
     if(c != NULL) icalcomponent_free(c);
-    if(g_verbose) fprintf(stderr, RED "[%-30s] FAIL: %s\n" RESET, __func__, msg); 
     return -1;
 }
 

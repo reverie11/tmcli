@@ -62,4 +62,4 @@ typedef struct tm_state{
 
 extern bool g_verbose;
 
-#endif
+#endif //TYPES_H

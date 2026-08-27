@@ -1,13 +1,11 @@
-#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
+#include "log.h"
 #include "utils.h"
-#include "colors.h"
 
 int validate_task_time(const Task* task)
 {
-    char msg[MSG_MAXLEN];
 
     bool sh = (task->start.time.hour >= 0 && task->start.time.hour < 24);
     bool sm = (task->start.time.min >= 0 && task->start.time.min < 60);
@@ -16,59 +14,48 @@ int validate_task_time(const Task* task)
     bool dh = (calculate_task_duration(task)>0);
 
     if(sh && sm && eh && em && dh){ 
-        if(g_verbose){
-            snprintf(msg, sizeof(msg), "time is valid");
-            printf(GREEN "[%-30s] SUCCESS: %s (id=%02d)\n" RESET, __func__,
-                    msg, task->id);
-        }
+        log_ok("time is valid");
     } else {
         if(!dh){
-            snprintf(msg, sizeof(msg), "endtime is INVALID: %02d:%02d",
-                    task->end.time.hour, task->end.time.min);
+            log_error("endtime is INVALID: %02d:%02d", task->end.time.hour, task->end.time.min);
             goto error_handling;
         }
         if(!sh){
-            snprintf(msg, sizeof(msg), "start.time.hour is INVALID: %d",
-                    task->start.time.hour);
+            log_error("start.time.hour is INVALID: %d", task->start.time.hour);
             goto error_handling;
         }
         if(!sm){
-            snprintf(msg, sizeof(msg), "start.time.min is INVALID: %d",
-                    task->start.time.min);
+            log_error("start.time.min is INVALID: %d", task->start.time.min);
             goto error_handling;
         }     
         if(!eh){
-            snprintf(msg, sizeof(msg), "end.time.hour is INVALID: %d",
-                    task->end.time.hour);
+            log_error("end.time.hour is INVALID: %d", task->end.time.hour);
             goto error_handling;
         }     
         if(!em){
-            snprintf(msg, sizeof(msg), "end.time.min is INVALID: %d", task->end.time.min);
+            log_error("end.time.min is INVALID: %d", task->end.time.min);
             goto error_handling;
         }
     }
     return 0;
 
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s (id=%02d)\n" RESET, __func__, msg,
-            task->id); 
     return 1;
 }
 
 int validate_date(const Date date)
 {
-    char msg[MSG_MAXLEN];
     bool dy = (date.year >= 0),
          dm = (date.month > 0 && date.month <= 12), 
          dd = (date.day > 0);
 
     if(!dy){
-        snprintf(msg, sizeof(msg), "date.year is INVALID: %d", date.year);
+        log_error("date.year is INVALID: %d", date.year);
         goto error_handling;
     }
 
     if(!dm){
-        snprintf(msg, sizeof(msg), "date.month is INVALID: %d", date.month);
+        log_error("date.month is INVALID: %d", date.month);
         goto error_handling;
     }
 
@@ -82,14 +69,13 @@ int validate_date(const Date date)
     else dd = dd && (date.day <= 30);
 
     if(!dd){
-        snprintf(msg, sizeof(msg), "date.day is INVALID: %d", date.day);
+        log_error("date.day is INVALID: %d", date.day);
         goto error_handling;
     }
 
     return 0;
 
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s \n" RESET, __func__, msg); 
     return 1;
 }
 
@@ -160,10 +146,8 @@ Time calculate_end_time(const Time start, float duration_h){
         end.hour++;
     }
     if(end.hour >= 24) {
-        char msg[MSG_MAXLEN];
         end.hour-=24;
-        snprintf(msg, sizeof(msg), "endtime is on the next day;,");
-        if(g_verbose) printf(YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg);
+        log_warn("endtime is on the next day.");
     }
     return end;
 }
@@ -203,82 +187,73 @@ int compare_date(const void* a, const void* b)
 int validate_time_format(const char* str)
 {
     int length = strlen(str);
-    char msg[MSG_MAXLEN];
 
     if(length == 2 || length == 1){
         if(!str_is_digit(str)){
-            snprintf(msg, sizeof(msg), "invalid format: %s", str);
+            log_error("invalid format: %s", str);
             goto error_handling;
         }
     } else if (length == 5) {
         if(str[2] != ':'){
-            snprintf(msg, sizeof(msg), "invalid format: %s", str);
+            log_error("invalid format: %s", str);
             goto error_handling;
         }
         for(int i=0; i<5; i++){
             if(!ch_is_digit(str[i])) {
-                snprintf(msg, sizeof(msg), "invalid format: %s", str);
+                log_error("invalid format: %s", str);
                 goto error_handling;
             }
             if(i == 1) i++;
         }
     } else {
-        if(length > 5) snprintf(msg, sizeof(msg), "string is too long");
-        else snprintf(msg, sizeof(msg), "invalid format: %s", str);
+        if(length > 5) log_error("string is too long");
+        else log_error("invalid format: %s", str);
         goto error_handling;
     } 
     
     if(g_verbose){
-        snprintf(msg, sizeof(msg), "SUCCESS: str is valid");
-        printf(GREEN "[%-30s] %s\n" RESET, __func__, msg);
+        log_ok("SUCCESS: str is valid");
     }
     return 0;
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
 }
 
 int validate_date_format(const char* str)
 {
     int length = strlen(str);
-    char msg[MSG_MAXLEN];
     if(length == 2 || length == 1){
         if(!str_is_digit(str)){
-            snprintf(msg, sizeof(msg), "invalid format: %s", str);
+            log_error("invalid format: %s", str);
             goto error_handling;
         }
     } else if (length == 5 || length == 10) {
         if(str[2] != '.' || (length == 10 && str[5] != '.')){
-            snprintf(msg, sizeof(msg), "invalid format: %s", str);
+            log_error("invalid format: %s", str);
             goto error_handling;
         }
         for(int i=0; i<length; i++){
             if(i == 2 || i == 5) continue;
             if(!ch_is_digit(str[i])) {
-                snprintf(msg, sizeof(msg), "invalid format: %s", str);
+                log_error("invalid format: %s", str);
                 goto error_handling;
             }
         }
     } else {
-        if(length > 10) snprintf(msg, sizeof(msg), "string is too long");
-        else snprintf(msg, sizeof(msg), "invalid format: %s", str);
+        if(length > 10) log_error("string is too long");
+        else log_error("invalid format: %s", str);
         goto error_handling;
     } 
     
-    if(g_verbose){
-        snprintf(msg, sizeof(msg), "SUCCESS: str is valid");
-        printf(GREEN "[%-30s] %s\n" RESET, __func__, msg);
-    }
+    log_ok("SUCCESS: str is valid");
     return 0;
 error_handling:
-    if(g_verbose) fprintf(stderr, RED "[%-30s] ERROR: %s\n" RESET, __func__, msg); 
     return 1;
 
 }
 
 Time str_to_time(const char* str){
     Time time;
-    char msg[MSG_MAXLEN];
     int length = strlen(str);
     if(validate_time_format(str) == 0){
         switch(length){
@@ -299,23 +274,20 @@ Time str_to_time(const char* str){
         bool h = (time.hour >= 0 && time.hour < 24);
         bool m = (time.min >= 0 && time.min < 60);
         if(!h){
-            snprintf(msg, sizeof(msg), "hour is INVALID: %s", str);
+            log_error("hour is INVALID: %s", str);
             goto error_handling;
         }
         if(!m){
-            snprintf(msg, sizeof(msg), "minute is INVALID: %s", str);
+            log_error("minute is INVALID: %s", str);
             goto error_handling;
         }
 
     } else{
-        snprintf(msg, sizeof(msg), "invalid format: %s", str);
+        log_error("invalid format: %s", str);
         goto error_handling;
     }
 
-    if(g_verbose){
-        snprintf(msg, sizeof(msg), "%02d:%02d", time.hour, time.min);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("%02d:%02d", time.hour, time.min);
     return time;
 
 error_handling:
@@ -323,17 +295,15 @@ error_handling:
     time.hour = -1;
     time.min = -1;
 
-    fprintf(stderr, YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg); 
     return time;
 }
 
 Date str_to_date(const char* str){
     Date date = get_date_today(), today = get_date_today();
-    char msg[MSG_MAXLEN];
     int length = strlen(str);
 
     if(validate_date_format(str) != 0){
-        snprintf(msg, sizeof(msg), "date format is INVALID: %s", str);
+        log_error("date format is INVALID: %s", str);
         goto error_handling;
     }    
 
@@ -365,14 +335,11 @@ Date str_to_date(const char* str){
     }
 
     if(validate_date(date) != 0){
-        snprintf(msg, sizeof(msg), "date is INVALID: %s", str);
+        log_error("date is INVALID: %s", str);
         goto error_handling;
     }
 
-    if(g_verbose){
-        snprintf(msg, sizeof(msg), "%02d.%02d.%04d", date.day, date.month, date.year);
-        printf(GREEN "[%-30s] SUCCESS: %s\n" RESET, __func__, msg);
-    }
+    log_ok("%02d.%02d.%04d", date.day, date.month, date.year);
     return date;
 
 error_handling:
@@ -381,7 +348,6 @@ error_handling:
     date.month = -1;
     date.year = -1;
 
-    fprintf(stderr, YELLOW "[%-30s] WARNING: %s\n" RESET, __func__, msg); 
     return date;
 }
 

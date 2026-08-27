@@ -139,4 +139,4 @@ Time get_time_now(void);
  */
 int get_days_in_month(int month, bool leap);
 
-#endif
+#endif //UTILS_H
