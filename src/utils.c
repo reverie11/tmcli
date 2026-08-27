@@ -17,7 +17,7 @@ int validate_task_time(const Task* task)
         log_ok("time is valid");
     } else {
         if(!dh){
-            log_error("endtime is INVALID: %02d:%02d", task->end.time.hour, task->end.time.min);
+            log_error("end.time is INVALID: %02d:%02d", task->end.time.hour, task->end.time.min);
             goto error_handling;
         }
         if(!sh){
@@ -109,12 +109,13 @@ int calculate_task_duration_in_days(const Task* task)
         return duration_days;
     } 
 
-    for(int i = task->start.date.year+1; i < task->end.date.year; i++){
-        duration_days += (365+is_leap_year(i));
-    }
 
     leap = is_leap_year(task->start.date.year);
     if(task->start.date.year != task->end.date.year){
+        for(int i = task->start.date.year; i < task->end.date.year; i++){
+            duration_days += (365+is_leap_year(i));
+        }
+
         for(int i = task->start.date.month+1; i <= 12; i++){
             duration_days += get_days_in_month(i, leap);
         }
@@ -129,8 +130,12 @@ int calculate_task_duration_in_days(const Task* task)
         }
     } 
 
-    duration_days += get_days_in_month(task->start.date.month, leap) - task->start.date.day;
-    duration_days += task->end.date.day;
+    if(task->start.date.month != task->end.date.month){
+        duration_days += get_days_in_month(task->start.date.month, leap) - task->start.date.day;
+        duration_days += task->end.date.day;
+    } else {
+        duration_days += task->end.date.day - task->start.date.day;
+    }
 
     return duration_days;
 }
