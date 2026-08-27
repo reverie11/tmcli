@@ -1,5 +1,5 @@
 
-TMCLI_VERSION = v0.2.0
+TMCLI_VERSION = v0.2.1
 TMCLI_AUTHOR = reverie11
 
 TARGET = tmcli
