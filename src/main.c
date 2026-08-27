@@ -73,9 +73,9 @@ void print_help() {
         "  reset                      Reset task-list\n"
         "\n"
         "OBJECTS\n"
-        "  start                       task's starttime\n"
-        "  end                         task's endtime\n"
-        "  name                        task's name\n"
+        "  start                      task's starttime\n"
+        "  end                        task's endtime\n"
+        "  name                       task's name\n"
         "\n"
         "FORMAT\n"
         "  DATE                       D[D.MM.YYYY]\n"
@@ -288,6 +288,8 @@ int main(int argc, char** argv)
         } else {
             if(strcmp(object, OBJ_STR[START]) == 0){
                 TM_modify_task_start(&tm, order_id, str_to_time(value));
+            } else if(strcmp(object, OBJ_STR[END]) == 0){
+                TM_modify_task_end(&tm, order_id, str_to_time(value));
             } else if(strcmp(object, OBJ_STR[NAME]) == 0){
                 TM_modify_task_end(&tm, order_id, str_to_time(value));
             }
