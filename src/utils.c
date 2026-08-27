@@ -9,10 +9,10 @@ int validate_task_time(const Task* task)
 {
     char msg[MSG_MAXLEN];
 
-    bool sh = (task->start.hour >= 0 && task->start.hour < 24);
-    bool sm = (task->start.min >= 0 && task->start.min < 60);
-    bool eh = (task->end.hour >= 0 && task->end.hour < 24);
-    bool em = (task->end.min >= 0 && task->end.min < 60);
+    bool sh = (task->start.time.hour >= 0 && task->start.time.hour < 24);
+    bool sm = (task->start.time.min >= 0 && task->start.time.min < 60);
+    bool eh = (task->end.time.hour >= 0 && task->end.time.hour < 24);
+    bool em = (task->end.time.min >= 0 && task->end.time.min < 60);
     bool dh = (calculate_task_duration(task)>0);
 
     if(sh && sm && eh && em && dh){ 
@@ -24,26 +24,26 @@ int validate_task_time(const Task* task)
     } else {
         if(!dh){
             snprintf(msg, sizeof(msg), "endtime is INVALID: %02d:%02d",
-                    task->end.hour, task->end.min);
+                    task->end.time.hour, task->end.time.min);
             goto error_handling;
         }
         if(!sh){
-            snprintf(msg, sizeof(msg), "start.hour is INVALID: %d",
-                    task->start.hour);
+            snprintf(msg, sizeof(msg), "start.time.hour is INVALID: %d",
+                    task->start.time.hour);
             goto error_handling;
         }
         if(!sm){
-            snprintf(msg, sizeof(msg), "start.min is INVALID: %d",
-                    task->start.min);
+            snprintf(msg, sizeof(msg), "start.time.min is INVALID: %d",
+                    task->start.time.min);
             goto error_handling;
         }     
         if(!eh){
-            snprintf(msg, sizeof(msg), "end.hour is INVALID: %d",
-                    task->end.hour);
+            snprintf(msg, sizeof(msg), "end.time.hour is INVALID: %d",
+                    task->end.time.hour);
             goto error_handling;
         }     
         if(!em){
-            snprintf(msg, sizeof(msg), "end.min is INVALID: %d", task->end.min);
+            snprintf(msg, sizeof(msg), "end.time.min is INVALID: %d", task->end.time.min);
             goto error_handling;
         }
     }
@@ -95,9 +95,58 @@ error_handling:
 
 float calculate_task_duration(const Task* task)
 {
-    float duration_h = task->end.hour - task->start.hour + (task->end.min -
-            task->start.min)/60.0;
+    float duration_h;
+
+    int diff = compare_date(&task->start.date, &task->end.date);
+    if(diff == 0) {
+        duration_h = task->end.time.hour - task->start.time.hour + (task->end.time.min - task->start.time.min)/60.0;
+    } else if (diff < 0){ 
+        duration_h = (24-task->start.time.hour)+task->end.time.hour+24*(calculate_task_duration_in_days(task)-1);
+    } else {
+        duration_h = -1.0f;
+    }
     return duration_h;
+}
+
+int calculate_task_duration_in_days(const Task* task)
+{
+    int duration_days = 0;
+    bool leap = false;
+    
+    int diff = compare_date(&task->start.date, &task->end.date);
+
+    if(diff == 0) {
+        duration_days = 0;
+        return duration_days;
+    } else if (diff > 0){ 
+        duration_days = -1;
+        return duration_days;
+    } 
+
+    for(int i = task->start.date.year+1; i < task->end.date.year; i++){
+        duration_days += (365+is_leap_year(i));
+    }
+
+    leap = is_leap_year(task->start.date.year);
+    if(task->start.date.year != task->end.date.year){
+        for(int i = task->start.date.month+1; i <= 12; i++){
+            duration_days += get_days_in_month(i, leap);
+        }
+
+        leap = is_leap_year(task->end.date.year);
+        for(int i = 1; i < task->end.date.month; i++){
+            duration_days += get_days_in_month(i, leap);
+        }
+    } else {
+        for(int i = task->start.date.month+1; i < task->end.date.month; i++){
+            duration_days += get_days_in_month(i, leap);
+        }
+    } 
+
+    duration_days += get_days_in_month(task->start.date.month, leap) - task->start.date.day;
+    duration_days += task->end.date.day;
+
+    return duration_days;
 }
 
 Time calculate_end_time(const Time start, float duration_h){
@@ -110,7 +159,7 @@ Time calculate_end_time(const Time start, float duration_h){
         end.min-=60;
         end.hour++;
     }
-    if(end.hour >=24) {
+    if(end.hour >= 24) {
         char msg[MSG_MAXLEN];
         end.hour-=24;
         snprintf(msg, sizeof(msg), "endtime is on the next day;,");
@@ -125,8 +174,7 @@ int compare_and_reorder_tasks(const void* a, const void* b)
     Task** task_a = ( Task**)a;
     Task** task_b = ( Task**)b;
     
-    int res = (((*task_a)->start.hour - (*task_b)->start.hour)*60 + 
-            ((*task_a)->start.min - (*task_b)->start.min));
+    int res = compare_time(&( *task_a )->start, &( *task_b )->start);
     int tmp;
     if(res > 0){
         tmp = (*task_a)->order_id;
@@ -148,9 +196,8 @@ int compare_date(const void* a, const void* b)
 {
     Date* date_a = (Date*)a;
     Date* date_b = (Date*)b;
-    
-    return ((date_a->year - date_b->year)*365 + (date_a->month -
-                date_b->month)*31 + (date_a->day - date_b->day));
+
+    return ((date_a->year - date_b->year)*365 + (date_a->month - date_b->month)*31 + (date_a->day - date_b->day));
 }
 
 int validate_time_format(const char* str)
@@ -338,8 +385,6 @@ error_handling:
     return date;
 }
 
-
-
 long str_to_uint(const char* str)
 {
     long result = 0, factor = 1, i = strlen(str)-1;
@@ -377,3 +422,16 @@ Time get_time_now(void)
     return (Time) {.hour = now->tm_hour, .min = now->tm_min};
 }
 
+int get_days_in_month(int month, bool leap)
+{
+    switch (month) {
+        case 1: case 3: case 5: case 7: case 8: case 10: case 12: 
+            return 31;
+        case 4: case 6: case 9: case 11:
+            return 30;
+		case 2: 
+            return leap? 29: 28;
+        default: 
+            return 0;
+    }
+}

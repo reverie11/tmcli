@@ -51,8 +51,7 @@ error_handling:
     return 1;
 }
 
-int TM_create_task(TaskManager* tm, const Time start, const Time end, const
-        char* name)
+int TM_create_task(TaskManager* tm, const Time start, const Time end, const char* name)
 {
     char msg[MSG_MAXLEN];
     if(!tm->initialized){
@@ -67,8 +66,10 @@ int TM_create_task(TaskManager* tm, const Time start, const Time end, const
 
     t->id = tm->n_created_tasks;
     t->order_id = tm->n_active_tasks;
-    t->start = start;
-    t->end = end;
+    t->start.time = start;
+    t->end.time = end;
+    t->start.date = get_date_today();
+    t->end.date = get_date_today();
     t->duration_h = calculate_task_duration(t);
     snprintf(t->name, sizeof(t->name), "%s", name);
 
@@ -99,10 +100,10 @@ void TM_print_task(TaskManager*tm, int task_order_id)
     if( t != NULL){
         printf("## Task %2d\n", t->id);
         printf("%-12s: %s\n", "name", t->name);
-        printf("%-12s: %02d.%02d.%04d\n", "date", tm->task_date.day,
-                tm->task_date.month, tm->task_date.year);
-        printf("%-12s: %02d:%02d\n", "start", t->start.hour, t->start.min);
-        printf("%-12s: %02d:%02d\n", "end", t->end.hour, t->end.min);
+        printf("%-12s: %02d.%02d.%04d\n", "start.date", t->start.date.day, t->start.date.month, t->start.date.year);
+        printf("%-12s: %02d:%02d\n", "start.time", t->start.time.hour, t->start.time.min);
+        printf("%-12s: %02d.%02d.%04d\n", "end.date", t->end.date.day, t->end.date.month, t->end.date.year);
+        printf("%-12s: %02d:%02d\n", "end.time", t->end.time.hour, t->end.time.min);
         float m = (t->duration_h - (int)t->duration_h)*60;
         float h = t->duration_h-m/60;
         printf("%-12s: %.0f hour(s) %.0f min(s)\n", "duration", h, m);
@@ -148,13 +149,13 @@ mode_0:
         if(t != NULL){
             if(strlen(t->name)<=32) snprintf(buf, sizeof(buf), 
                     "%02d:%02d - %02d:%02d    %.32s", 
-                    t->start.hour, t->start.min,
-                    t->end.hour, t->end.min,
+                    t->start.time.hour, t->start.time.min,
+                    t->end.time.hour, t->end.time.min,
                     t->name);
             else snprintf(buf, sizeof(buf), 
                     "%02d:%02d - %02d:%02d    %.32s...", 
-                    t->start.hour, t->start.min,
-                    t->end.hour, t->end.min,
+                    t->start.time.hour, t->start.time.min,
+                    t->end.time.hour, t->end.time.min,
                     t->name);
             if(highlight_id == -1 || t->id != highlight_id) printf(BLUE);
             else if(t->id == highlight_id) printf(PURPLE);
@@ -243,16 +244,16 @@ int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start)
 {
     char msg[MSG_MAXLEN];
     Task* task = tm->task_list[task_order_id];
-    Time fallback = task->start;
+    Time fallback = task->start.time;
     if(task == NULL) {
         snprintf(msg, sizeof(msg), "[task %0d] task doesnt exist", 
                 task_order_id);
         goto error_handling;
     }
 
-    task->start = start;
+    task->start.time = start;
     if(validate_task_time(task) != 0) {
-        task->start = fallback;
+        task->start.time= fallback;
         snprintf(msg, sizeof(msg), "[task %0d] invalid starttime", 
                 task_order_id);
         goto error_handling;
@@ -276,16 +277,16 @@ int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end)
 {
     char msg[MSG_MAXLEN];
     Task* task = tm->task_list[task_order_id];
-    Time fallback = task->end;
+    Time fallback = task->end.time;
     if(task == NULL) {
         snprintf(msg, sizeof(msg), "[task %0d] task doesnt exist", 
                 task_order_id);
         goto error_handling;
     }
 
-    task->end = end;
+    task->end.time = end;
     if(validate_task_time(task) != 0) {
-        task->end = fallback;
+        task->end.time = fallback;
         snprintf(msg, sizeof(msg), "[task %0d] invalid endtime", 
                 task_order_id);
         goto error_handling;
@@ -600,12 +601,12 @@ int TM_export_to_ICS(TaskManager* tm)
         icalcomponent* event = icalcomponent_new(ICAL_VEVENT_COMPONENT);
         icalcomponent_add_property(event, icalproperty_new_summary(task->name));
         icaltimetype event_start = today;
-        event_start.hour = task->start.hour;
-        event_start.minute = task->start.min;
+        event_start.hour = task->start.time.hour;
+        event_start.minute = task->start.time.min;
 
         icaltimetype event_end = today;
-        event_end.hour = task->end.hour;
-        event_end.minute = task->end.min;
+        event_end.hour = task->end.time.hour;
+        event_end.minute = task->end.time.min;
 
         icalcomponent_add_property(event, icalproperty_new_dtstart(event_start));
         icalcomponent_add_property(event, icalproperty_new_dtend(event_end));

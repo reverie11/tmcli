@@ -47,6 +47,7 @@ int validate_date_format(const char* str);
  * @brief calculate_task_duration.
  */
 float calculate_task_duration(const Task* task);
+int calculate_task_duration_in_days(const Task* task);
 
 /**
  * @brief calculate_task_duration.
@@ -63,7 +64,16 @@ Time calculate_end_time(const Time start, float duration_h);
  * >0 if priority(a) < priority(b) | a is later.
  */
 int compare_and_reorder_tasks(const void* a, const void* b);
+
+/**
+ * @brief compare_time in the same day
+ */
 int compare_time(const void* a, const void* b);
+
+/**
+ * @brief compare_date
+ * @notes is not reliable for calculating days between dates. Use calculate_task_duration_in_days instead.
+ */
 int compare_date(const void* a, const void* b);
 /******************************** CONVERSION *********************************/
 /**
@@ -123,5 +133,10 @@ Date get_date_today(void);
  * @brief get_time_now.
  */
 Time get_time_now(void);
+
+/**
+ * @brief get_days_in_month.
+ */
+int get_days_in_month(int month, bool leap);
 
 #endif

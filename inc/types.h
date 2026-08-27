@@ -16,16 +16,21 @@
 #define STATE_DIR
 #endif
 
-typedef struct time{
-    int8_t hour;
-    int8_t min;
-}Time;
-
 typedef struct date{
     int8_t day;
     int8_t month;
     int16_t year;
 }Date;
+
+typedef struct time{
+    int8_t hour;
+    int8_t min;
+}Time;
+
+typedef struct timestamp{
+    Time time;
+    Date date;
+}Timestamp;
 
 /**
  * @brief typedef struct task
@@ -39,7 +44,7 @@ typedef struct task {
     int8_t order_id;
     char name[TASKNAME_MAXLEN];
     float duration_h;
-    Time start, end;
+    Timestamp start, end;
 }Task;
 
 typedef struct task_manager{
