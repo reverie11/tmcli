@@ -151,14 +151,27 @@ void print_completion(int argc, char** argv ) {
             printf("%02d:%02d ", now.hour+1, now.min);
     } else if(argc == ind+3){
         // tmcli CMD ARG1 ARG2
-        if (  strcmp(argv[ind], CMD_STR[ADD]) == 0 ||
+        if ( strcmp(argv[ind], CMD_STR[ADD]) == 0 ||
              (strcmp(argv[ind], CMD_STR[MOD]) == 0 && 
-              strcmp(argv[ind+2], OBJ_STR[NAME]) == 0) ){
+              strcmp(argv[ind+2], OBJ_STR[NAME]) == 0
+             ))
+        {
             printf("taskNameA taskNameB taskNameC");
         } else if ( strcmp(argv[ind], CMD_STR[MOD]) == 0 &&
-                    strcmp(argv[ind+2], OBJ_STR[NAME]) != 0){
+                    (strcmp(argv[ind+2], OBJ_STR[START]) == 0 ||
+                     strcmp(argv[ind+2], OBJ_STR[START_TIME]) == 0 ||
+                     strcmp(argv[ind+2], OBJ_STR[END]) == 0 ||
+                     strcmp(argv[ind+2], OBJ_STR[END_TIME]) == 0
+                    ))
+        {
             printf("%02d:%02d ", now.hour, now.min);
-        } 
+        } else if ( strcmp(argv[ind], CMD_STR[MOD]) == 0 &&
+                    (strcmp(argv[ind+2], OBJ_STR[START_DATE]) == 0 ||
+                     strcmp(argv[ind+2], OBJ_STR[END_DATE]) == 0
+                    ))
+        {
+            printf("%02d.%02d.%04d ", target_date.day, target_date.month, target_date.year);
+        }
     }   
 
 }
