@@ -163,7 +163,7 @@ int compare_and_reorder_tasks(const void* a, const void* b)
     Task** task_a = ( Task**)a;
     Task** task_b = ( Task**)b;
     
-    int res = compare_time(&( *task_a )->start, &( *task_b )->start);
+    int res = compare_timestamp(&( *task_a )->start, &( *task_b )->start);
     int tmp;
     if(res > 0){
         tmp = (*task_a)->order_id;
