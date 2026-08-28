@@ -251,7 +251,7 @@ int main(int argc, char** argv)
 
     // add      STRT ENDT NAME
     if(strcmp(cmd, CMD_STR[ADD]) == 0){
-        if(n_args < 1) {
+        if(n_args < 3) {
             snprintf(msg, sizeof(msg), "missing args");
             goto error_handling;
         }
