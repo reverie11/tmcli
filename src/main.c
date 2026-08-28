@@ -217,6 +217,7 @@ int main(int argc, char** argv)
     TaskManager tm;
     bzero(&tm, sizeof(TaskManager));
     TM_init(&tm);
+    TM_restore_state(&tm);
 
     const char* cmd = CMD_STR[SHW];
     int n_args = argc - optind;
@@ -240,13 +241,13 @@ int main(int argc, char** argv)
             goto error_handling;
         }
 
-        cmd = argv[optind++];
         tm.task_date = d;
+        TM_save_state(&tm);
+        cmd = argv[optind++];
         n_args = argc - optind;
         if(cmd == NULL) cmd = CMD_STR[SHW];
      }
 
-    TM_restore_state(&tm);
 
     // add      STRT ENDT NAME
     if(strcmp(cmd, CMD_STR[ADD]) == 0){
@@ -307,25 +308,21 @@ int main(int argc, char** argv)
         
         if(strcmp(object, OBJ_STR[NAME]) == 0){
             TM_modify_task_name(&tm, order_id, value);
-            TM_save_state(&tm);
-        } else {
-            if(strcmp(object, OBJ_STR[START]) == 0 ||
-               strcmp(object, OBJ_STR[START_TIME]) == 0){
-                TM_modify_task_start(&tm, order_id, str_to_time(value));
-            } else if(strcmp(object, OBJ_STR[END]) == 0 || 
-                      strcmp(object, OBJ_STR[END_TIME]) == 0){
-                TM_modify_task_end(&tm, order_id, str_to_time(value));
-            } else if(strcmp(object, OBJ_STR[START_DATE]) == 0){
-                TM_modify_task_start_date(&tm, order_id, str_to_date(value));
-            } else if(strcmp(object, OBJ_STR[END_DATE]) == 0){
-                TM_modify_task_end_date(&tm, order_id, str_to_date(value));
-            } else if(strcmp(object, OBJ_STR[NAME]) == 0){
-                TM_modify_task_name(&tm, order_id, value);
-            }
-            TM_sort_tasks(&tm);
-            TM_save_state(&tm);
-            TM_refresh_state(&tm);
-        }
+        } else if(strcmp(object, OBJ_STR[START]) == 0 ||
+                  strcmp(object, OBJ_STR[START_TIME]) == 0){
+            TM_modify_task_start(&tm, order_id, str_to_time(value));
+        } else if(strcmp(object, OBJ_STR[END]) == 0 || 
+                  strcmp(object, OBJ_STR[END_TIME]) == 0){
+            TM_modify_task_end(&tm, order_id, str_to_time(value));
+        } else if(strcmp(object, OBJ_STR[START_DATE]) == 0){
+            TM_modify_task_start_date(&tm, order_id, str_to_date(value));
+        } else if(strcmp(object, OBJ_STR[END_DATE]) == 0){
+            TM_modify_task_end_date(&tm, order_id, str_to_date(value));
+        } 
+
+        TM_sort_tasks(&tm);
+        TM_save_state(&tm);
+        TM_refresh_state(&tm);
         TM_print_all_tasks_highlight(&tm, 0, id);
     
     // move     T_ID      TIME

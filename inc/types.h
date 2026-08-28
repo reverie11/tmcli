@@ -13,7 +13,11 @@
 #define EXPORT_FILE "tmcli-export-%02d%02d%04d.ics"
 
 #ifndef STATE_DIR
-#define STATE_DIR
+#define STATE_DIR "."
+#endif
+
+#ifndef STATE_FILE
+#define STATE_FILE "state.dat"
 #endif
 
 typedef struct date{

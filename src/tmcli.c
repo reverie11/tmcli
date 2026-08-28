@@ -153,38 +153,43 @@ mode_0:
     {
         t = tm->task_list[i];
         if(t != NULL){
-            diff_start = compare_date(&t->start.date, &today); 
+            diff_start = compare_date(&t->start.date, &tm->task_date); 
+            diff_end = compare_date(&t->end.date, &tm->task_date); 
+
+            if(diff_start != 0 && diff_end != 0) continue;
+
             if (diff_start == -1){
                 snprintf(start_label, sizeof(start_label), "%s", label_ytd);
             } else if (diff_start == 1){
                 snprintf(start_label, sizeof(start_label), "%s", label_tmr);
             } else if (diff_start != 0){
                 const char* label_dmy = "%02d.%02d.%04d";
-                snprintf(start_label, sizeof(start_label), label_dmy, t->start.date.day, t->start.date.month, t->start.date.year);
+                snprintf(start_label, sizeof(start_label), label_dmy,
+                         t->start.date.day, t->start.date.month, t->start.date.year);
             } 
 
-            diff_end = compare_date(&t->end.date, &today); 
             if (diff_end == -1){
                 snprintf(end_label, sizeof(end_label), "%s", label_ytd);
             } else if (diff_end == 1){
                 snprintf(end_label, sizeof(end_label), "%s", label_tmr);
             } else if (diff_end != 0){
-                snprintf(end_label, sizeof(end_label), label_dmy, t->end.date.day, t->end.date.month, t->end.date.year);
+                snprintf(end_label, sizeof(end_label), label_dmy, t->end.date.day,
+                         t->end.date.month, t->end.date.year);
             } 
             if(strlen(t->name)<=32){
-                snprintf(buf, sizeof(buf), "    %02d:%02d   -   %02d:%02d     %.32s", 
+                snprintf(buf, sizeof(buf), "    %02d:%02d   -   %02d:%02d     %.25s", 
                          t->start.time.hour, t->start.time.min,
                          t->end.time.hour, t->end.time.min,
                          t->name);
             } else {
-                snprintf(buf, sizeof(buf), "    %02d:%02d   -   %02d:%02d     %.32s...", 
+                snprintf(buf, sizeof(buf), "    %02d:%02d   -   %02d:%02d     %.25s...", 
                          t->start.time.hour, t->start.time.min,
                          t->end.time.hour, t->end.time.min,
                          t->name);
             }
             if(highlight_id == -1 || t->id != highlight_id) printf(COLOR_BLUE);
             else if(t->id == highlight_id) printf(COLOR_PURPLE);
-            printf("%-*s [%d]\n", (int)sizeof(buf), buf, t->order_id);
+            printf("%-*s [%d]   \n", (int)sizeof(buf)-3, buf, t->order_id);
             if(diff_start || diff_end) printf("  %-10s  %-10s\n", start_label, end_label);
             printf(COLOR_RESET);
             diff_start = 0; diff_end = 0;
@@ -206,8 +211,7 @@ mode_1:
 void TM_print_self(TaskManager* tm)
 {
     printf("# Task Manager\n");
-    printf("task_date = %02d.%02d.%04d\n", tm->task_date.day,
-            tm->task_date.month, tm->task_date.year);
+    printf("task_date = %02d.%02d.%04d\n", tm->task_date.day, tm->task_date.month, tm->task_date.year);
     printf("n_active_tasks = %d\n", tm->n_active_tasks);
     printf("n_created_tasks = %d\n\n", tm->n_created_tasks);
     printf("initialized = %d\n\n", tm->initialized);
@@ -398,8 +402,7 @@ int TM_save_state_to_date(TaskManager* tm, const Date target_date)
     TM_state tms;
     char state_file[PATH_MAX];
 
-    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
-            target_date.day, target_date.month, target_date.year);
+    snprintf(state_file, PATH_MAX, STATE_DIR STATE_FILE);
 
     FILE *fp = fopen(state_file, "w");
     if(!fp) {
@@ -452,8 +455,7 @@ int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
     TM_state tms;
     char state_file[PATH_MAX];
 
-    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
-            target_date.day, target_date.month, target_date.year);
+    snprintf(state_file, PATH_MAX, STATE_DIR STATE_FILE);
 
     FILE *fp = fopen(state_file, "r");
     if(!fp) {
@@ -513,8 +515,7 @@ int TM_refresh_state(TaskManager* tm)
     TM_state tms;
     char state_file[PATH_MAX];
 
-    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
-            tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    snprintf(state_file, PATH_MAX, STATE_DIR STATE_FILE);
 
     FILE *fp = fopen(state_file, "r");
     if(!fp) {
@@ -571,12 +572,9 @@ error_handling:
 int TM_reset_state(TaskManager* tm)
 {
     char state_file[PATH_MAX];
-    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
-            tm->task_date.day, tm->task_date.month, tm->task_date.year);
+    snprintf(state_file, PATH_MAX, STATE_DIR STATE_FILE);
     if(unlink(state_file) != 0){
-        if(g_verbose) {
-            log_warn("unlink: %s", strerror(errno));
-        }
+        log_warn("unlink: %s", strerror(errno));
         return 1;
     }
     return 0;
