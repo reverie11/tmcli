@@ -54,6 +54,18 @@ int calculate_task_duration_in_days(const Task* task);
  */
 Time calculate_end_time(const Time start, float duration_h);
 
+/******************************** SHIFT **************************************/
+/**
+ * @brief shift_time_by_minutes. auto-increment hour accordingly to the shifted minutes
+ * @notes time.hour will be reset to 0 when it reaches 24. No carry over.
+ */
+Time shift_time_by_minutes(const Time* t, int mins);
+
+/**
+ * @brief shift_date_by_days. auto-increment month and year accordingly to the shifted days
+ * @notes date.year will be reset to 0 when it reaches 9999. No carry over.
+ */
+Date shift_date_by_days(const Date* d, int days);
 /******************************** COMPARISON *********************************/
 /**
  * @brief compare_and_reorder_tasks.
@@ -110,6 +122,10 @@ Date str_to_date(const char* str);
  * @return -1 on error
  */
 long str_to_uint(const char* str);
+/******************************** REVERSE-CONVERSION **************************/
+const char *time_to_str(const Time* t);
+const char *date_to_str(const Date* d);
+const char *timestamp_to_str(const Timestamp* ts);
 
 /******************************** BOOLEAN ************************************/
 /**

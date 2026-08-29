@@ -7,6 +7,7 @@
 #include "tmcli.h"
 #include "types.h"
 #include "utils.h"
+#include "cmd.h"
 
 #ifndef VERSION
 #define VERSION "unknown"
@@ -15,50 +16,6 @@
 #ifndef AUTHOR
 #define AUTHOR "unknown"
 #endif
-
-typedef enum {
-    _ON, // pre-command
-    ADD, 
-    DEL,
-    MOD,
-    MOV,
-    SHW,
-    EXP,
-    RST,
-    N_CMDS,
-} Cmd_list;
-
-static const char *CMD_STR[N_CMDS] = {
-    [_ON] = "on",
-    [ADD] = "add", 
-    [DEL] = "delete",
-    [MOD] = "modify",
-    [MOV] = "move",
-    [SHW] = "show", 
-    [EXP] = "export", 
-    [RST] = "reset",
-};
-
-typedef enum{
-    START, 
-    START_TIME, 
-    START_DATE, 
-    END,
-    END_TIME,
-    END_DATE,
-    NAME,
-    N_OBJS,
-} Obj_list;
-
-static const char *OBJ_STR[N_CMDS] = {
-    [START]         = "start",
-    [START_TIME]    = "start.time",
-    [START_DATE]    = "start.date",
-    [END]           = "end",
-    [END_TIME]      = "end.time",
-    [END_DATE]      = "end.date",
-    [NAME]          = "name",
-};
 
 void print_help() {
     printf(
@@ -219,7 +176,13 @@ int main(int argc, char** argv)
     TM_init(&tm);
     TM_restore_state(&tm);
 
+    const Date today = get_date_today();
+    const Date tmr = shift_date_by_days(&today, 1);
+    const Date ytd = shift_date_by_days(&today, -1);
+
     const char* cmd = CMD_STR[SHW];
+    const char* value;
+    const char* object;
     int n_args = argc - optind;
 
     if(optind < argc) {
@@ -233,8 +196,16 @@ int main(int argc, char** argv)
             goto error_handling;
         }
 
-        char* arg1 = argv[optind++];
-        Date d = str_to_date(arg1);
+        value = argv[optind++];
+
+        if(strcmp(value, VAL_STR[TDY]) == 0){
+            value = date_to_str(&today);
+        } else if(strcmp(value, VAL_STR[TMR]) == 0){
+            value = date_to_str(&tmr);
+        } else if(strcmp(value, VAL_STR[YTD]) == 0){
+            value = date_to_str(&ytd);
+        }
+        Date d = str_to_date(value);
 
         if (d.day == -1){
             snprintf(msg, sizeof(msg), "str_do_date fail");
@@ -303,8 +274,16 @@ int main(int argc, char** argv)
             goto error_handling;
         }
         int id = tm.task_list[order_id]->id;
-        char* object = argv[optind++];
-        char* value = argv[optind++];
+        object = argv[optind++];
+        value = argv[optind++];
+
+        if(strcmp(value, VAL_STR[TDY]) == 0){
+            value = date_to_str(&today);
+        } else if(strcmp(value, VAL_STR[TMR]) == 0){
+            value = date_to_str(&tmr);
+        } else if(strcmp(value, VAL_STR[YTD]) == 0){
+            value = date_to_str(&ytd);
+        }
         
         if(strcmp(object, OBJ_STR[NAME]) == 0){
             TM_modify_task_name(&tm, order_id, value);

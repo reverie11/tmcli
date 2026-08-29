@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
@@ -155,6 +156,67 @@ Time calculate_end_time(const Time start, float duration_h){
         log_warn("endtime is on the next day.");
     }
     return end;
+}
+
+Time shift_time_by_minutes(const Time* t, int mins)
+{
+    Time result = *t;
+    long rmin = result.min + mins%60;
+    if(rmin >= 60){
+        rmin %= 60;
+        result.hour++;
+    } else if(rmin < 0){
+        result.hour--;
+        rmin +=60;
+    }
+    result.min = rmin;
+
+    long rhour = result.hour + mins/60;
+    if(rhour >= 24) rhour %= 24;
+    else if(rhour < 0) rhour +=24;
+
+    result.hour = rhour;
+    return result;
+}
+
+Date shift_date_by_days(const Date* d, int days)
+{
+    Date result = *d;
+    bool leap = is_leap_year(result.year);
+    int mdays = get_days_in_month(result.month, leap);
+    long rday = result.day + days;
+    long ryear = result.year;
+    long abs = (rday>0)?rday: rday*(-1);
+    do{
+        if(rday > 0) {
+            rday -= mdays;
+            result.month++;
+            mdays = get_days_in_month(result.month, leap);
+        } else {
+            mdays = get_days_in_month(result.month, leap);
+            result.month--;
+            rday += mdays+1;
+        }
+        if(result.month > 12){
+            result.month-= 12;
+            ryear++;
+        } else if (result.month <= 0){
+            ryear--;
+            result.month+= 12;
+        }
+        leap = is_leap_year(ryear);
+        mdays = get_days_in_month(result.month, leap);
+        abs = (rday>0)?rday: rday*(-1);
+    } while(abs > mdays);
+    if(ryear >= 10000) ryear %= 10000;
+    else if(ryear < 0 ) ryear += 10000;
+    if(rday <= 0) {
+        result.month--;
+        rday+=mdays+1;
+    }
+    result.day = rday;
+    result.year = ryear;
+    return result;
 }
 
 int compare_and_reorder_tasks(const void* a, const void* b)
@@ -375,6 +437,29 @@ long str_to_uint(const char* str)
     }
 
     return result;
+}
+
+const char *time_to_str(const Time* t)
+{
+    static char buf[6];
+    snprintf(buf, sizeof(buf), "%02d:%02d", t->hour, t->min);
+    return buf;
+}
+
+const char *date_to_str(const Date* d)
+{
+    static char buf[11];
+    snprintf(buf, sizeof(buf), "%02d.%02d.%04d", d->day, d->month, d->year);
+    return buf;
+}
+
+const char *timestamp_to_str(const Timestamp* ts)
+{
+    static char buf[17];
+    snprintf(buf, sizeof(buf), "%02d.%02d.%04d/%02d:%02d", 
+             ts->date.day, ts->date.month, ts->date.year,
+             ts->time.hour, ts->time.min);
+    return buf;
 }
 
 int str_is_digit(const char* str)

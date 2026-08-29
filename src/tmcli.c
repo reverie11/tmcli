@@ -62,8 +62,8 @@ int TM_create_task(TaskManager* tm, const Time start, const Time end, const char
     t->order_id = tm->n_active_tasks;
     t->start.time = start;
     t->end.time = end;
-    t->start.date = get_date_today();
-    t->end.date = get_date_today();
+    t->start.date = tm->task_date;
+    t->end.date = tm->task_date;
     t->duration_h = calculate_task_duration(t);
     snprintf(t->name, sizeof(t->name), "%s", name);
 
