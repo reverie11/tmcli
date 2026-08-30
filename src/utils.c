@@ -18,23 +18,23 @@ int validate_task_time(const Task* task)
         log_ok("time is valid");
     } else {
         if(!dh){
-            log_error("end.time is INVALID: %02d:%02d", task->end.time.hour, task->end.time.min);
+            log_warn("end.time is INVALID: %02d:%02d", task->end.time.hour, task->end.time.min);
             goto error_handling;
         }
         if(!sh){
-            log_error("start.time.hour is INVALID: %d", task->start.time.hour);
+            log_warn("start.time.hour is INVALID: %d", task->start.time.hour);
             goto error_handling;
         }
         if(!sm){
-            log_error("start.time.min is INVALID: %d", task->start.time.min);
+            log_warn("start.time.min is INVALID: %d", task->start.time.min);
             goto error_handling;
         }     
         if(!eh){
-            log_error("end.time.hour is INVALID: %d", task->end.time.hour);
+            log_warn("end.time.hour is INVALID: %d", task->end.time.hour);
             goto error_handling;
         }     
         if(!em){
-            log_error("end.time.min is INVALID: %d", task->end.time.min);
+            log_warn("end.time.min is INVALID: %d", task->end.time.min);
             goto error_handling;
         }
     }
@@ -51,12 +51,12 @@ int validate_date(const Date date)
          dd = (date.day > 0);
 
     if(!dy){
-        log_error("date.year is INVALID: %d", date.year);
+        log_warn("date.year is INVALID: %d", date.year);
         goto error_handling;
     }
 
     if(!dm){
-        log_error("date.month is INVALID: %d", date.month);
+        log_warn("date.month is INVALID: %d", date.month);
         goto error_handling;
     }
 
@@ -70,7 +70,7 @@ int validate_date(const Date date)
     else dd = dd && (date.day <= 30);
 
     if(!dd){
-        log_error("date.day is INVALID: %d", date.day);
+        log_warn("date.day is INVALID: %d", date.day);
         goto error_handling;
     }
 
@@ -265,24 +265,24 @@ int validate_time_format(const char* str)
 
     if(length == 2 || length == 1){
         if(!str_is_digit(str)){
-            log_error("invalid format: %s", str);
+            log_warn("invalid format: %s", str);
             goto error_handling;
         }
     } else if (length == 5) {
         if(str[2] != ':'){
-            log_error("invalid format: %s", str);
+            log_warn("invalid format: %s", str);
             goto error_handling;
         }
         for(int i=0; i<5; i++){
             if(!ch_is_digit(str[i])) {
-                log_error("invalid format: %s", str);
+                log_warn("invalid format: %s", str);
                 goto error_handling;
             }
             if(i == 1) i++;
         }
     } else {
-        if(length > 5) log_error("string is too long");
-        else log_error("invalid format: %s", str);
+        if(length > 5) log_warn("string is too long");
+        else log_warn("invalid format: %s", str);
         goto error_handling;
     } 
     
@@ -299,24 +299,24 @@ int validate_date_format(const char* str)
     int length = strlen(str);
     if(length == 2 || length == 1){
         if(!str_is_digit(str)){
-            log_error("invalid format: %s", str);
+            log_warn("invalid format: %s", str);
             goto error_handling;
         }
     } else if (length == 5 || length == 10) {
         if(str[2] != '.' || (length == 10 && str[5] != '.')){
-            log_error("invalid format: %s", str);
+            log_warn("invalid format: %s", str);
             goto error_handling;
         }
         for(int i=0; i<length; i++){
             if(i == 2 || i == 5) continue;
             if(!ch_is_digit(str[i])) {
-                log_error("invalid format: %s", str);
+                log_warn("invalid format: %s", str);
                 goto error_handling;
             }
         }
     } else {
-        if(length > 10) log_error("string is too long");
-        else log_error("invalid format: %s", str);
+        if(length > 10) log_warn("string is too long");
+        else log_warn("invalid format: %s", str);
         goto error_handling;
     } 
     
@@ -349,16 +349,16 @@ Time str_to_time(const char* str){
         bool h = (time.hour >= 0 && time.hour < 24);
         bool m = (time.min >= 0 && time.min < 60);
         if(!h){
-            log_error("hour is INVALID: %s", str);
+            log_warn("hour is INVALID: %s", str);
             goto error_handling;
         }
         if(!m){
-            log_error("minute is INVALID: %s", str);
+            log_warn("minute is INVALID: %s", str);
             goto error_handling;
         }
 
     } else{
-        log_error("invalid format: %s", str);
+        log_warn("invalid format: %s", str);
         goto error_handling;
     }
 
@@ -378,7 +378,7 @@ Date str_to_date(const char* str){
     int length = strlen(str);
 
     if(validate_date_format(str) != 0){
-        log_error("date format is INVALID: %s", str);
+        log_warn("date format is INVALID: %s", str);
         goto error_handling;
     }    
 
@@ -410,7 +410,7 @@ Date str_to_date(const char* str){
     }
 
     if(validate_date(date) != 0){
-        log_error("date is INVALID: %s", str);
+        log_warn("date is INVALID: %s", str);
         goto error_handling;
     }
 

@@ -23,9 +23,9 @@ typedef enum{
 void log_printf(Logtype type, const char *func, const char *fmt, ...)
     PRINTF_LIKE(3, 4);
 
-#define log_info(...) log_printf(INFO, __func__, __VA_ARGS__)
-#define log_error(...) log_printf(ERROR,__func__, __VA_ARGS__)
-#define log_ok(...) log_printf(OK,__func__, __VA_ARGS__)
-#define log_warn(...) log_printf(WARN,__func__, __VA_ARGS__)
+#define log_info(...)   log_printf(INFO , __func__, __VA_ARGS__)
+#define log_error(...)  log_printf(ERROR, __func__, __VA_ARGS__)
+#define log_ok(...)     log_printf(OK   , __func__, __VA_ARGS__)
+#define log_warn(...)   log_printf(WARN , __func__, __VA_ARGS__)
 
 #endif //LOG_H
