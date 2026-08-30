@@ -49,7 +49,6 @@ typedef enum{
     TDY,
     YTD,
     TMR,
-    ALL,
     N_VALS
 } Val_list;
 
@@ -57,7 +56,6 @@ static const char *VAL_STR[N_VALS] = {
     [TDY] = "today",
     [YTD] = "yesterday",
     [TMR] = "tomorrow",
-    [ALL] = "all",
 };
 
 #endif //CMD_H

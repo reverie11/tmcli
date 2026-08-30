@@ -63,19 +63,35 @@ void print_completion(int argc, char** argv ) {
     Date target_date = get_date_today();
     Time now = get_time_now();
 
+    const Date today = get_date_today();
+    const Date tmr = shift_date_by_days(&today, 1);
+    const Date ytd = shift_date_by_days(&today, -1);
+
     int ind = 0;
     
     if(argc >= 1 && strcmp(argv[0], CMD_STR[_ON]) == 0){
-        if(argc == 1) printf("%02d.%02d.%04d", target_date.day,
-                target_date.month, target_date.year);
-        if(argc >= 2 && validate_date(str_to_date(argv[1]) ) == 0 ) {
-            target_date = str_to_date(argv[1]);
-            ind+=2;
+        if(argc == 1) {
+            printf("%s ", date_to_str(&target_date));
+            for(int i=0; i < N_VALS; i++) printf("%s ", VAL_STR[i]);
+        } else if (argc >= 2){
+            if(strcmp(argv[1], VAL_STR[TDY]) == 0){
+                target_date = today;
+            } else if(strcmp(argv[1], VAL_STR[TMR]) == 0){
+                target_date = tmr;
+            } else if(strcmp(argv[1], VAL_STR[YTD]) == 0){
+                target_date = ytd;
+            } else {
+                target_date = str_to_date(argv[1]);
+            }
+
+            if(validate_date(target_date ) == 0 ) {
+                ind+=2;
+            }
         }
+
     }
 
-    snprintf(state_file, PATH_MAX, STATE_DIR "/state-%02d%02d%04d.dat",
-            target_date.day, target_date.month, target_date.year);
+    snprintf(state_file, PATH_MAX, STATE_DIR STATE_FILE);
 
     // quick fetch state
     FILE *fp = fopen(state_file, "r");
@@ -87,7 +103,7 @@ void print_completion(int argc, char** argv ) {
 
     if(argc == ind){
         // tmcli 
-       for(int i = 0; i < N_CMDS; i++) printf("%s ", CMD_STR[i]);
+       for(int i = (ind==0)?0:1; i < N_CMDS; i++) printf("%s ", CMD_STR[i]);
     } else if(argc == ind+1){
         // tmcli CMD
         if( strcmp(argv[ind], CMD_STR[MOD]) == 0 ||
@@ -109,26 +125,24 @@ void print_completion(int argc, char** argv ) {
     } else if(argc == ind+3){
         // tmcli CMD ARG1 ARG2
         if ( strcmp(argv[ind], CMD_STR[ADD]) == 0 ||
-             (strcmp(argv[ind], CMD_STR[MOD]) == 0 && 
-              strcmp(argv[ind+2], OBJ_STR[NAME]) == 0
-             ))
-        {
+             (strcmp(argv[ind], CMD_STR[MOD]) == 0 && strcmp(argv[ind+2], OBJ_STR[NAME]) == 0)
+        ){
             printf("taskNameA taskNameB taskNameC");
-        } else if ( strcmp(argv[ind], CMD_STR[MOD]) == 0 &&
-                    (strcmp(argv[ind+2], OBJ_STR[START]) == 0 ||
-                     strcmp(argv[ind+2], OBJ_STR[START_TIME]) == 0 ||
-                     strcmp(argv[ind+2], OBJ_STR[END]) == 0 ||
-                     strcmp(argv[ind+2], OBJ_STR[END_TIME]) == 0
-                    ))
-        {
-            printf("%02d:%02d ", now.hour, now.min);
-        } else if ( strcmp(argv[ind], CMD_STR[MOD]) == 0 &&
-                    (strcmp(argv[ind+2], OBJ_STR[START_DATE]) == 0 ||
-                     strcmp(argv[ind+2], OBJ_STR[END_DATE]) == 0
-                    ))
-        {
-            printf("%02d.%02d.%04d ", target_date.day, target_date.month, target_date.year);
-        }
+        } else if ( strcmp(argv[ind], CMD_STR[MOD]) == 0){
+
+            if( strcmp(argv[ind+2], OBJ_STR[START])         == 0 ||
+                strcmp(argv[ind+2], OBJ_STR[START_TIME])    == 0 ||
+                strcmp(argv[ind+2], OBJ_STR[END])           == 0 ||
+                strcmp(argv[ind+2], OBJ_STR[END_TIME])      == 0
+            ){
+                printf("%02d:%02d ", now.hour, now.min);
+            } else if( strcmp(argv[ind+2], OBJ_STR[START_DATE]) == 0 ||
+                       strcmp(argv[ind+2], OBJ_STR[END_DATE])   == 0
+            ){
+                printf("%02d.%02d.%04d ", target_date.day, target_date.month, target_date.year);
+                for(int i=0; i < N_VALS; i++) printf("%s ", VAL_STR[i]);
+            }
+        } 
     }   
 
 }

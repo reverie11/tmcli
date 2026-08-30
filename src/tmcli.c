@@ -468,7 +468,7 @@ int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
 
     size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        log_error("error on fwrite: %ld Bytes written"
+        log_error("error on fread: %ld Bytes written"
                 "(expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
@@ -528,7 +528,7 @@ int TM_refresh_state(TaskManager* tm)
 
     size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        log_error("error on fwrite: %ld Bytes written (expect=%ld)\n", bytes, sizeof(TM_state));
+        log_error("error on fread: %ld Bytes written (expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
     fclose(fp);
