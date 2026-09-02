@@ -633,13 +633,6 @@ int TM_sort_tasks(TaskManager* tm)
 
 int TM_export_to_ICS(TaskManager* tm)
 {
-    icaltimetype today = {
-        .year = tm->task_date.year,
-        .month = tm->task_date.month,
-        .day = tm->task_date.day,
-        .is_date = false,
-    };
-
     icalcomponent* c = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
 
     icalcomponent_add_property(c, icalproperty_new_version("2.0"));
@@ -650,13 +643,21 @@ int TM_export_to_ICS(TaskManager* tm)
         Task* task = tm->task_list[i];
         icalcomponent* event = icalcomponent_new(ICAL_VEVENT_COMPONENT);
         icalcomponent_add_property(event, icalproperty_new_summary(task->name));
-        icaltimetype event_start = today;
-        event_start.hour = task->start.time.hour;
-        event_start.minute = task->start.time.min;
+        icaltimetype event_start = {
+            .day = task->start.date.day,
+            .month = task->start.date.month,
+            .year = task->start.date.year,
+            .hour = task->start.time.hour,
+            .minute = task->start.time.min,
+        };
 
-        icaltimetype event_end = today;
-        event_end.hour = task->end.time.hour;
-        event_end.minute = task->end.time.min;
+        icaltimetype event_end = {
+            .day = task->end.date.day,
+            .month = task->end.date.month,
+            .year = task->end.date.year,
+            .hour = task->end.time.hour,
+            .minute = task->end.time.min,
+        };
 
         icalcomponent_add_property(event, icalproperty_new_dtstart(event_start));
         icalcomponent_add_property(event, icalproperty_new_dtend(event_end));
@@ -667,8 +668,7 @@ int TM_export_to_ICS(TaskManager* tm)
     char *ical_string = icalcomponent_as_ical_string(c);
 
     char filename[32];
-    snprintf(filename, sizeof(filename), EXPORT_FILE, tm->task_date.day,
-           tm->task_date.month, tm->task_date.year);
+    snprintf(filename, sizeof(filename), EXPORT_FILE);
     FILE *fp = fopen(filename, "w");
     if(!fp) {
         log_error("fopen: %s", strerror(errno));
