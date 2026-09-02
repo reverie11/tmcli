@@ -46,7 +46,7 @@ error_handling:
     return 1;
 }
 
-int TM_create_task(TaskManager* tm, const Time start, const Time end, const char* name)
+int TM_create_task(TaskManager* tm, const Timestamp start, const Timestamp end, const char* name)
 {
     if(!tm->initialized){
         TM_init(tm);
@@ -60,10 +60,12 @@ int TM_create_task(TaskManager* tm, const Time start, const Time end, const char
 
     t->id = tm->n_created_tasks;
     t->order_id = tm->n_active_tasks;
-    t->start.time = start;
-    t->end.time = end;
-    t->start.date = tm->task_date;
-    t->end.date = tm->task_date;
+    t->start = start;
+    t->end = end;
+    
+    int diff = compare_time(&end.time, &start.time);
+    if(diff <= 0) t->end.date = shift_date_by_days(&start.date, 1); 
+
     t->duration_h = calculate_task_duration(t);
     snprintf(t->name, sizeof(t->name), "%s", name);
 

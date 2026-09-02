@@ -197,9 +197,10 @@ int main(int argc, char** argv)
     const char* cmd = CMD_STR[SHW];
     const char* value;
     const char* object;
-    const char* start;
-    const char* end;   
     const char* name;  
+
+    Timestamp start;
+    Timestamp end;   
     Timestamp tstamp;
     
     int status = 0;
@@ -247,10 +248,10 @@ int main(int argc, char** argv)
             goto error_handling;
         }
 
-        start = argv[optind++];
-        end   = argv[optind++];
+        start = str_to_timestamp(argv[optind++], tm.task_date);
+        end = str_to_timestamp(argv[optind++], tm.task_date);
         name  = argv[optind++];
-        int id = TM_create_task(&tm, str_to_time(start), str_to_time(end), name);
+        int id = TM_create_task(&tm, start, end, name);
         TM_sort_tasks(&tm);
         TM_save_state(&tm);
         TM_refresh_state(&tm);
@@ -306,7 +307,7 @@ int main(int argc, char** argv)
         }
 
         if(strcmp(object, OBJ_STR[NAME]) != 0){
-            tstamp = str_to_timestamp(value);
+            tstamp = str_to_timestamp(value, tm.task_date);
         }
         
         if(strcmp(object, OBJ_STR[NAME]) == 0){
@@ -348,7 +349,7 @@ int main(int argc, char** argv)
         }
 
         int id = tm.task_list[order_id]->id;
-        tstamp = str_to_timestamp(argv[optind++]);
+        tstamp = str_to_timestamp(argv[optind++], tm.task_date);
         TM_move_task_start(&tm,order_id, tstamp);
 
         TM_sort_tasks(&tm);

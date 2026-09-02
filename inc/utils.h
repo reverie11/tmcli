@@ -144,7 +144,7 @@ Date str_to_date(const char* str);
  * "17/19"      -> 17:00 on 19.12.2026
  * "17/17"      -> 17:00 on 17.01.2027
  */
-Timestamp str_to_timestamp(const char* str);
+Timestamp str_to_timestamp(const char* str, const Date default_date);
 
 /**
  * @brief str_to_uint.

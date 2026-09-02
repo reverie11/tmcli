@@ -437,7 +437,7 @@ error_handling:
     return date;
 }
 
-Timestamp str_to_timestamp(const char* str)
+Timestamp str_to_timestamp(const char* str, const Date default_date)
 {
     Timestamp ts = {
         .date = {.day = -1, .month = -1, .year = -1}, 
@@ -461,7 +461,7 @@ Timestamp str_to_timestamp(const char* str)
     {
         ts.time = str_to_time(buf);
         if(ts.time.hour != -1 || ts.time.min != -1){
-            ts.date = get_date_today();
+            ts.date = default_date;
         }
         return ts;
     }

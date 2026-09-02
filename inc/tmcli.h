@@ -15,8 +15,7 @@ int TM_init(TaskManager* tm);
  * @return task_id on success, otherwise -1
  * @todo Add max_task_check
  */
-int TM_create_task(TaskManager* tm, const Time start, const Time end, const
-        char* name);
+int TM_create_task(TaskManager* tm, const Timestamp start, const Timestamp end, const char* name);
 
 /**
  * @brief TM_delete_task.
