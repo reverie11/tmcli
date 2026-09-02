@@ -229,6 +229,7 @@ int TM_delete_task(TaskManager* tm, int task_order_id)
     int task_id = tm->task_list[task_order_id]->id;
     free(tm->task_list[task_order_id]);
     tm->task_list[task_order_id] = NULL;
+    memmove(&tm->task_list[task_order_id], &tm->task_list[task_order_id+1], (NTASKS_MAX-task_order_id-1)*sizeof(tm->task_list[0]));
     tm->n_active_tasks--;
 
     log_ok("[task %02d] task deleted (id=%d)", task_order_id, task_id);
@@ -248,7 +249,7 @@ int TM_delete_all_tasks(TaskManager* tm)
     for(int i=0; i < n_active_tasks; i++)
     {
         if(tm->task_list[i] != NULL){
-            if(TM_delete_task(tm, i) != 0){
+            if(TM_delete_task(tm, 0) != 0){
                 status_ok = false;
                 failed_list[j++] = i;
             }
@@ -476,9 +477,7 @@ int TM_save_state_to_date(TaskManager* tm, const Date target_date)
     fclose(fp);
     fp = NULL;
 
-    if(g_verbose) {
-        log_ok("current state saved");
-    }
+    log_ok("current state saved");
 
     return 0;
 
@@ -512,8 +511,7 @@ int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
 
     size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        log_error("error on fread: %ld Bytes read"
-                "(expect=%ld)\n", bytes, sizeof(TM_state));
+        log_error("error on fread: %ld Bytes read (expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
     fclose(fp);
