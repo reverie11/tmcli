@@ -2,60 +2,67 @@
 #define CMD_H
 
 typedef enum {
-    _ON, // pre-command
-    ADD, 
-    DEL,
-    MOD,
-    MOV,
-    SHW,
-    EXP,
-    RST,
-    N_CMDS,
-} Cmd_list;
+    // PRE-COMMANDS
+    CMD_ON, 
+    // COMMANDS
+    CMD_ADD, 
+    CMD_DEL,
+    CMD_MOD,
+    CMD_MOV,
+    CMD_SHW,
+    CMD_EXP,
+    CMD_RST,
+    N_CMD,
+} CmdList;
 
-static const char *CMD_STR[N_CMDS] = {
-    [_ON] = "on",
-    [ADD] = "add", 
-    [DEL] = "delete",
-    [MOD] = "modify",
-    [MOV] = "move",
-    [SHW] = "show", 
-    [EXP] = "export", 
-    [RST] = "reset",
+static const char *STR_CMD[N_CMD] = {
+    [CMD_ON] = "on",
+    [CMD_ADD] = "add", 
+    [CMD_DEL] = "delete",
+    [CMD_MOD] = "modify",
+    [CMD_MOV] = "move",
+    [CMD_SHW] = "show", 
+    [CMD_EXP] = "export", 
+    [CMD_RST] = "reset",
 };
 
 typedef enum{
-    START, 
-    START_TIME, 
-    START_DATE, 
-    END,
-    END_TIME,
-    END_DATE,
-    NAME,
-    N_OBJS,
-} Obj_list;
+    OBJ_START, 
+    OBJ_START_TIME, 
+    OBJ_START_DATE, 
+    OBJ_END,
+    OBJ_END_TIME,
+    OBJ_END_DATE,
+    OBJ_NAME,
+    N_OBJ,
+} ObjList;
 
-static const char *OBJ_STR[N_OBJS] = {
-    [START]         = "start",
-    [START_TIME]    = "start.time",
-    [START_DATE]    = "start.date",
-    [END]           = "end",
-    [END_TIME]      = "end.time",
-    [END_DATE]      = "end.date",
-    [NAME]          = "name",
+static const char *STR_OBJ[N_OBJ] = {
+    [OBJ_START]         = "start",
+    [OBJ_START_TIME]    = "start.time",
+    [OBJ_START_DATE]    = "start.date",
+    [OBJ_END]           = "end",
+    [OBJ_END_TIME]      = "end.time",
+    [OBJ_END_DATE]      = "end.date",
+    [OBJ_NAME]          = "name",
 };
 
 typedef enum{
-    TDY,
-    YTD,
-    TMR,
-    N_VALS
-} Val_list;
+    VAL_DATE_TDY,
+    VAL_DATE_YTD,
+    VAL_DATE_TMR,
+    N_VAL_DATE
+} ValDateList;
 
-static const char *VAL_STR[N_VALS] = {
-    [TDY] = "today",
-    [YTD] = "yesterday",
-    [TMR] = "tomorrow",
+static const char *STR_VAL_DATE[N_VAL_DATE] = {
+    [VAL_DATE_TDY] = "today",
+    [VAL_DATE_YTD] = "yesterday",
+    [VAL_DATE_TMR] = "tomorrow",
 };
+
+typedef enum{
+    MODE_ALL,
+    N_MODES
+} ModeList;
 
 #endif //CMD_H

@@ -69,16 +69,16 @@ void print_completion(int argc, char** argv ) {
 
     int ind = 0;
     
-    if(argc >= 1 && strcmp(argv[0], CMD_STR[_ON]) == 0){
+    if(argc >= 1 && strcmp(argv[0], STR_CMD[CMD_ON]) == 0){
         if(argc == 1) {
             printf("%s ", date_to_str(&target_date));
-            for(int i=0; i < N_VALS; i++) printf("%s ", VAL_STR[i]);
+            for(int i=0; i < N_VAL_DATE; i++) printf("%s ", STR_VAL_DATE[i]);
         } else if (argc >= 2){
-            if(strcmp(argv[1], VAL_STR[TDY]) == 0){
+            if(strcmp(argv[1], STR_VAL_DATE[VAL_DATE_TDY]) == 0){
                 target_date = today;
-            } else if(strcmp(argv[1], VAL_STR[TMR]) == 0){
+            } else if(strcmp(argv[1], STR_VAL_DATE[VAL_DATE_TMR]) == 0){
                 target_date = tmr;
-            } else if(strcmp(argv[1], VAL_STR[YTD]) == 0){
+            } else if(strcmp(argv[1], STR_VAL_DATE[VAL_DATE_YTD]) == 0){
                 target_date = ytd;
             } else {
                 target_date = str_to_date(argv[1]);
@@ -103,44 +103,44 @@ void print_completion(int argc, char** argv ) {
 
     if(argc == ind){
         // tmcli 
-       for(int i = (ind==0)?0:1; i < N_CMDS; i++) printf("%s ", CMD_STR[i]);
+       for(int i = (ind==0)?0:1; i < N_CMD; i++) printf("%s ", STR_CMD[i]);
     } else if(argc == ind+1){
         // tmcli CMD
-        if( strcmp(argv[ind], CMD_STR[MOD]) == 0 ||
-            strcmp(argv[ind], CMD_STR[MOV]) == 0 ||
-            strcmp(argv[ind], CMD_STR[DEL]) == 0 )
+        if( strcmp(argv[ind], STR_CMD[CMD_MOD]) == 0 ||
+            strcmp(argv[ind], STR_CMD[CMD_MOV]) == 0 ||
+            strcmp(argv[ind], STR_CMD[CMD_DEL]) == 0 )
         {
             for(int i = 0; i < tms.tm.n_active_tasks; i++) printf("%d ", i);
-        } else if ( strcmp(argv[ind], CMD_STR[ADD]) == 0 ){
+        } else if ( strcmp(argv[ind], STR_CMD[CMD_ADD]) == 0 ){
             printf("%02d:%02d ", now.hour, now.min);
         }
     } else if(argc == ind+2){ 
         // tmcli CMD ARG1 
-        if( strcmp(argv[ind], CMD_STR[MOD]) == 0 )
-            for(int i = 0; i < N_OBJS; i++) printf("%s ", OBJ_STR[i]);
-        else if ( strcmp(argv[ind], CMD_STR[ADD]) == 0 )
+        if( strcmp(argv[ind], STR_CMD[CMD_MOD]) == 0 )
+            for(int i = 0; i < N_OBJ; i++) printf("%s ", STR_OBJ[i]);
+        else if ( strcmp(argv[ind], STR_CMD[CMD_ADD]) == 0 )
             printf("%02d:%02d ", now.hour+1, now.min);
-        else if (strcmp(argv[ind], CMD_STR[MOV]) == 0) 
+        else if (strcmp(argv[ind], STR_CMD[CMD_MOV]) == 0) 
             printf("%02d:%02d ", now.hour+1, now.min);
     } else if(argc == ind+3){
         // tmcli CMD ARG1 ARG2
-        if ( strcmp(argv[ind], CMD_STR[ADD]) == 0 ||
-             (strcmp(argv[ind], CMD_STR[MOD]) == 0 && strcmp(argv[ind+2], OBJ_STR[NAME]) == 0)
+        if ( strcmp(argv[ind], STR_CMD[CMD_ADD]) == 0 ||
+             (strcmp(argv[ind], STR_CMD[CMD_MOD]) == 0 && strcmp(argv[ind+2], STR_OBJ[OBJ_NAME]) == 0)
         ){
             printf("taskNameA taskNameB taskNameC");
-        } else if ( strcmp(argv[ind], CMD_STR[MOD]) == 0){
+        } else if ( strcmp(argv[ind], STR_CMD[CMD_MOD]) == 0){
 
-            if( strcmp(argv[ind+2], OBJ_STR[START])         == 0 ||
-                strcmp(argv[ind+2], OBJ_STR[START_TIME])    == 0 ||
-                strcmp(argv[ind+2], OBJ_STR[END])           == 0 ||
-                strcmp(argv[ind+2], OBJ_STR[END_TIME])      == 0
+            if( strcmp(argv[ind+2], STR_OBJ[OBJ_START])         == 0 ||
+                strcmp(argv[ind+2], STR_OBJ[OBJ_START_TIME])    == 0 ||
+                strcmp(argv[ind+2], STR_OBJ[OBJ_END])           == 0 ||
+                strcmp(argv[ind+2], STR_OBJ[OBJ_END_TIME])      == 0
             ){
                 printf("%02d:%02d ", now.hour, now.min);
-            } else if( strcmp(argv[ind+2], OBJ_STR[START_DATE]) == 0 ||
-                       strcmp(argv[ind+2], OBJ_STR[END_DATE])   == 0
+            } else if( strcmp(argv[ind+2], STR_OBJ[OBJ_START_DATE]) == 0 ||
+                       strcmp(argv[ind+2], STR_OBJ[OBJ_END_DATE])   == 0
             ){
                 printf("%02d.%02d.%04d ", target_date.day, target_date.month, target_date.year);
-                for(int i=0; i < N_VALS; i++) printf("%s ", VAL_STR[i]);
+                for(int i=0; i < N_VAL_DATE; i++) printf("%s ", STR_VAL_DATE[i]);
             }
         } 
     }   
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
     const Date tmr = shift_date_by_days(&today, 1);
     const Date ytd = shift_date_by_days(&today, -1);
 
-    const char* cmd = CMD_STR[SHW];
+    const char* cmd = STR_CMD[CMD_SHW];
     const char* value;
     const char* object;
     const char* name;  
@@ -211,7 +211,7 @@ int main(int argc, char** argv)
         n_args = argc - optind;
     }
 
-    if(strcmp(cmd, CMD_STR[_ON]) == 0){
+    if(strcmp(cmd, STR_CMD[CMD_ON]) == 0){
         if(n_args < 1) {
             snprintf(msg, sizeof(msg), "missing args");
             goto error_handling;
@@ -219,11 +219,11 @@ int main(int argc, char** argv)
 
         value = argv[optind++];
 
-        if(strcmp(value, VAL_STR[TDY]) == 0){
+        if(strcmp(value, STR_VAL_DATE[VAL_DATE_TDY]) == 0){
             value = date_to_str(&today);
-        } else if(strcmp(value, VAL_STR[TMR]) == 0){
+        } else if(strcmp(value, STR_VAL_DATE[VAL_DATE_TMR]) == 0){
             value = date_to_str(&tmr);
-        } else if(strcmp(value, VAL_STR[YTD]) == 0){
+        } else if(strcmp(value, STR_VAL_DATE[VAL_DATE_YTD]) == 0){
             value = date_to_str(&ytd);
         }
         Date d = str_to_date(value);
@@ -237,12 +237,12 @@ int main(int argc, char** argv)
         TM_save_state(&tm);
         cmd = argv[optind++];
         n_args = argc - optind;
-        if(cmd == NULL) cmd = CMD_STR[SHW];
+        if(cmd == NULL) cmd = STR_CMD[CMD_SHW];
      }
 
 
     // add      STRT ENDT NAME
-    if(strcmp(cmd, CMD_STR[ADD]) == 0){
+    if(strcmp(cmd, STR_CMD[CMD_ADD]) == 0){
         if(n_args < 3) {
             snprintf(msg, sizeof(msg), "missing args");
             goto error_handling;
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
         TM_save_state(&tm);
 
     // delete   T_ID 
-    } else if(strcmp(cmd, CMD_STR[DEL]) == 0){
+    } else if(strcmp(cmd, STR_CMD[CMD_DEL]) == 0){
         if(n_args < 1) {
             snprintf(msg, sizeof(msg), "missing args");
             goto error_handling;
@@ -275,11 +275,13 @@ int main(int argc, char** argv)
             snprintf(msg, sizeof(msg), "ID is out of range");
             goto error_handling;
         }
+        snprintf(msg, sizeof(msg), "task id=%02d \"%.10s...\" deleted", order_id, tm.task_list[order_id]->name);
         TM_delete_task(&tm, order_id);
+        log_info("%s", msg);
         TM_save_state(&tm);
 
     // modify   T_ID OBJT TIME
-    } else if(strcmp(cmd, CMD_STR[MOD]) == 0){
+    } else if(strcmp(cmd, STR_CMD[CMD_MOD]) == 0){
         if(n_args < 3) {
             snprintf(msg, sizeof(msg), "missing args");
             goto error_handling;
@@ -298,29 +300,29 @@ int main(int argc, char** argv)
         object = argv[optind++];
         value = argv[optind++];
 
-        if(strcmp(value, VAL_STR[TDY]) == 0){
+        if(strcmp(value, STR_VAL_DATE[VAL_DATE_TDY]) == 0){
             value = date_to_str(&today);
-        } else if(strcmp(value, VAL_STR[TMR]) == 0){
+        } else if(strcmp(value, STR_VAL_DATE[VAL_DATE_TMR]) == 0){
             value = date_to_str(&tmr);
-        } else if(strcmp(value, VAL_STR[YTD]) == 0){
+        } else if(strcmp(value, STR_VAL_DATE[VAL_DATE_YTD]) == 0){
             value = date_to_str(&ytd);
         }
 
-        if(strcmp(object, OBJ_STR[NAME]) != 0){
+        if(strcmp(object, STR_OBJ[OBJ_NAME]) != 0){
             tstamp = str_to_timestamp(value, tm.task_date);
         }
         
-        if(strcmp(object, OBJ_STR[NAME]) == 0){
+        if(strcmp(object, STR_OBJ[OBJ_NAME]) == 0){
             status = TM_modify_task_name(&tm, order_id, value);
-        } else if(strcmp(object, OBJ_STR[START]) == 0 ||
-                  strcmp(object, OBJ_STR[START_TIME]) == 0){
+        } else if(strcmp(object, STR_OBJ[OBJ_START]) == 0 ||
+                  strcmp(object, STR_OBJ[OBJ_START_TIME]) == 0){
             status = TM_modify_task_start(&tm, order_id, tstamp);
-        } else if(strcmp(object, OBJ_STR[END]) == 0 || 
-                  strcmp(object, OBJ_STR[END_TIME]) == 0){
+        } else if(strcmp(object, STR_OBJ[OBJ_END]) == 0 || 
+                  strcmp(object, STR_OBJ[OBJ_END_TIME]) == 0){
             status = TM_modify_task_end(&tm, order_id, tstamp);
-        } else if(strcmp(object, OBJ_STR[START_DATE]) == 0){
+        } else if(strcmp(object, STR_OBJ[OBJ_START_DATE]) == 0){
             status = TM_modify_task_start_date(&tm, order_id, tstamp.date);
-        } else if(strcmp(object, OBJ_STR[END_DATE]) == 0){
+        } else if(strcmp(object, STR_OBJ[OBJ_END_DATE]) == 0){
             status = TM_modify_task_end_date(&tm, order_id, tstamp.date);
         } 
 
@@ -332,7 +334,7 @@ int main(int argc, char** argv)
         TM_print_all_tasks_highlight(&tm, 0, id);
     
     // move     T_ID      TIME
-    } else if(strcmp(cmd, CMD_STR[MOV]) == 0){
+    } else if(strcmp(cmd, STR_CMD[CMD_MOV]) == 0){
         if(n_args < 2) {
             snprintf(msg, sizeof(msg), "missing args");
             goto error_handling;
@@ -359,7 +361,7 @@ int main(int argc, char** argv)
         TM_print_all_tasks_highlight(&tm, 0, id);
 
     // show
-    } else if(strcmp(cmd, CMD_STR[SHW]) == 0){
+    } else if(strcmp(cmd, STR_CMD[CMD_SHW]) == 0){
         if(g_verbose) TM_print_self(&tm);
         if(n_args > 0){
             int mode = str_to_uint(argv[optind++]);
@@ -370,22 +372,20 @@ int main(int argc, char** argv)
         }
 
     // export
-    } else if(strcmp(cmd, CMD_STR[EXP]) == 0){
+    } else if(strcmp(cmd, STR_CMD[CMD_EXP]) == 0){
         if(TM_export_to_ICS(&tm) != 0){
             snprintf(msg, sizeof(msg), "export failed");
             goto error_handling;
         } 
-        snprintf(msg, sizeof(msg), "tasks exported to ./" EXPORT_FILE,
-            tm.task_date.day, tm.task_date.month, tm.task_date.year);
+        snprintf(msg, sizeof(msg), "tasks exported to ./" EXPORT_FILE);
         log_info("%s\n", msg);
 
     // reset
-    } else if(strcmp(cmd, CMD_STR[RST]) == 0){
+    } else if(strcmp(cmd, STR_CMD[CMD_RST]) == 0){
         if (TM_reset_state(&tm) != 0){
-            snprintf(msg, sizeof(msg), "reset failed");
+            log_error("reset failed");
         }
-        snprintf(msg, sizeof(msg), "task list reseted");
-        log_info("%s\n", msg);
+        log_info("task list reseted");
 
     } else {
         snprintf(msg, sizeof(msg), "unknown command: %s", cmd);
