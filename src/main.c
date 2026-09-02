@@ -197,6 +197,12 @@ int main(int argc, char** argv)
     const char* cmd = CMD_STR[SHW];
     const char* value;
     const char* object;
+    const char* start;
+    const char* end;   
+    const char* name;  
+    Timestamp tstamp;
+    
+    int status = 0;
     int n_args = argc - optind;
 
     if(optind < argc) {
@@ -241,9 +247,9 @@ int main(int argc, char** argv)
             goto error_handling;
         }
 
-        char* start = argv[optind++];
-        char* end = argv[optind++];
-        char* name = argv[optind++];
+        start = argv[optind++];
+        end   = argv[optind++];
+        name  = argv[optind++];
         int id = TM_create_task(&tm, str_to_time(start), str_to_time(end), name);
         TM_sort_tasks(&tm);
         TM_save_state(&tm);
@@ -298,20 +304,26 @@ int main(int argc, char** argv)
         } else if(strcmp(value, VAL_STR[YTD]) == 0){
             value = date_to_str(&ytd);
         }
+
+        if(strcmp(object, OBJ_STR[NAME]) != 0){
+            tstamp = str_to_timestamp(value);
+        }
         
         if(strcmp(object, OBJ_STR[NAME]) == 0){
-            TM_modify_task_name(&tm, order_id, value);
+            status = TM_modify_task_name(&tm, order_id, value);
         } else if(strcmp(object, OBJ_STR[START]) == 0 ||
                   strcmp(object, OBJ_STR[START_TIME]) == 0){
-            TM_modify_task_start(&tm, order_id, str_to_time(value));
+            status = TM_modify_task_start(&tm, order_id, tstamp);
         } else if(strcmp(object, OBJ_STR[END]) == 0 || 
                   strcmp(object, OBJ_STR[END_TIME]) == 0){
-            TM_modify_task_end(&tm, order_id, str_to_time(value));
+            status = TM_modify_task_end(&tm, order_id, tstamp);
         } else if(strcmp(object, OBJ_STR[START_DATE]) == 0){
-            TM_modify_task_start_date(&tm, order_id, str_to_date(value));
+            status = TM_modify_task_start_date(&tm, order_id, tstamp.date);
         } else if(strcmp(object, OBJ_STR[END_DATE]) == 0){
-            TM_modify_task_end_date(&tm, order_id, str_to_date(value));
+            status = TM_modify_task_end_date(&tm, order_id, tstamp.date);
         } 
+
+        if(status != 0) goto error_handling;
 
         TM_sort_tasks(&tm);
         TM_save_state(&tm);
@@ -336,8 +348,8 @@ int main(int argc, char** argv)
         }
 
         int id = tm.task_list[order_id]->id;
-        Time value = str_to_time(argv[optind++]);
-        TM_move_task_start(&tm,order_id, value);
+        tstamp = str_to_timestamp(argv[optind++]);
+        TM_move_task_start(&tm,order_id, tstamp);
 
         TM_sort_tasks(&tm);
         TM_save_state(&tm);

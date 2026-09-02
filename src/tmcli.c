@@ -265,7 +265,52 @@ int TM_delete_all_tasks(TaskManager* tm)
     return 0;
 }
 
-int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start)
+int TM_modify_task_start(TaskManager* tm, int task_order_id, Timestamp start)
+{
+    Task* task = tm->task_list[task_order_id];
+    if(task == NULL) {
+        log_error("[task %0d] task doesnt exist", task_order_id);
+        return 1;
+    }
+
+    int status = 0;
+    int diff = compare_time(&task->start.time, &task->end.time);
+    if(diff <= 0){
+        status |= TM_modify_task_start_date(tm, task_order_id, start.date);
+        status |= TM_modify_task_start_time(tm, task_order_id, start.time);
+    }else {
+        status |= TM_modify_task_start_time(tm, task_order_id, start.time);
+        status |= TM_modify_task_start_date(tm, task_order_id, start.date);
+    }
+
+    if(status != 0) log_error("fail");
+    return status;
+}
+
+int TM_modify_task_end(TaskManager* tm, int task_order_id, Timestamp end)
+{
+    Task* task = tm->task_list[task_order_id];
+    if(task == NULL) {
+        log_error("[task %0d] task doesnt exist", task_order_id);
+        return 1;
+    }
+
+    int status = 0;
+
+    int diff = compare_time(&end.time, &task->start.time);
+    if(diff <= 0){
+        status |= TM_modify_task_end_date(tm, task_order_id, end.date);
+        status |= TM_modify_task_end_time(tm, task_order_id, end.time);
+    }else {
+        status |= TM_modify_task_end_time(tm, task_order_id, end.time);
+        status |= TM_modify_task_end_date(tm, task_order_id, end.date);
+    }
+
+    if(status != 0) log_error("fail");
+    return status;
+}
+
+int TM_modify_task_start_time(TaskManager* tm, int task_order_id, Time start)
 {
     Task* task = tm->task_list[task_order_id];
     Time fallback = task->start.time;
@@ -284,10 +329,9 @@ int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start)
 
     log_ok("[task %02d] task modified\n", task_order_id);
     return 0;
-    
 }
 
-int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end)
+int TM_modify_task_end_time(TaskManager* tm, int task_order_id, Time end)
 {
     Task* task = tm->task_list[task_order_id];
     Time fallback = task->end.time;
@@ -305,7 +349,6 @@ int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end)
     task->duration_h = calculate_task_duration(task);
 
     log_ok("[task %02d] task modified\n", task_order_id);
-
     return 0;
 }
 
@@ -369,7 +412,7 @@ int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name)
     
 }
 
-int TM_move_task_start(TaskManager* tm, int task_order_id, Time start)
+int TM_move_task_start(TaskManager* tm, int task_order_id, Timestamp start)
 {
     Task* task = tm->task_list[task_order_id];
 
@@ -378,9 +421,8 @@ int TM_move_task_start(TaskManager* tm, int task_order_id, Time start)
         return 1;
     }
 
-    Time end = calculate_end_time(start, task->duration_h);
-    int priority = compare_time(&task->start, &start);
-
+    Timestamp end = calculate_end_timestamp(start, task->duration_h);
+    int priority = compare_timestamp(&task->start, &start);
     if(priority == 0) return 0;
     else if(priority>0){ // new start time is earlier
         TM_modify_task_start(tm, task_order_id, start);
@@ -468,7 +510,7 @@ int TM_restore_state_from_date(TaskManager *tm, const Date target_date)
 
     size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        log_error("error on fread: %ld Bytes written"
+        log_error("error on fread: %ld Bytes read"
                 "(expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
@@ -528,7 +570,7 @@ int TM_refresh_state(TaskManager* tm)
 
     size_t bytes = fread(&tms, 1, sizeof(TM_state), fp);
     if(bytes < sizeof(TM_state)){
-        log_error("error on fread: %ld Bytes written (expect=%ld)\n", bytes, sizeof(TM_state));
+        log_error("error on fread: %ld Bytes read (expect=%ld)\n", bytes, sizeof(TM_state));
         goto error_handling;
     }
     fclose(fp);

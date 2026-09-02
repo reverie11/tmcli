@@ -8,7 +8,7 @@
 #define TASKNAME_MAXLEN 64
 #define LINE_MAXLEN 64
 
-#define NTASKS_MAX 10
+#define NTASKS_MAX 100
 
 #define EXPORT_FILE "tmcli-export-%02d%02d%04d.ics"
 

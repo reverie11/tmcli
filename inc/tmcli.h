@@ -33,12 +33,18 @@ int TM_delete_all_tasks(TaskManager* tm);
  * @brief TM_modify_task_start.
  * modify task_start WITHOUT sorting the task_list
  */
-int TM_modify_task_start(TaskManager* tm, int task_order_id, Time start);
-int TM_modify_task_end(TaskManager* tm, int task_order_id, Time end);
+int TM_modify_task_start(TaskManager* tm, int task_order_id, Timestamp start);
+int TM_modify_task_end(TaskManager* tm, int task_order_id, Timestamp end);
+
+int TM_modify_task_start_time(TaskManager* tm, int task_order_id, Time start);
+int TM_modify_task_end_time(TaskManager* tm, int task_order_id, Time end);
+
 int TM_modify_task_start_date(TaskManager* tm, int task_order_id, Date start);
 int TM_modify_task_end_date(TaskManager* tm, int task_order_id, Date end);
+
 int TM_modify_task_name(TaskManager* tm, int task_order_id, const char* name);
-int TM_move_task_start(TaskManager* tm, int task_order_id, Time start);
+
+int TM_move_task_start(TaskManager* tm, int task_order_id, Timestamp start);
 
 /**
  * @brief TM_sort_tasks.

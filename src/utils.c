@@ -12,36 +12,33 @@ int validate_task_time(const Task* task)
     bool sm = (task->start.time.min >= 0 && task->start.time.min < 60);
     bool eh = (task->end.time.hour >= 0 && task->end.time.hour < 24);
     bool em = (task->end.time.min >= 0 && task->end.time.min < 60);
-    bool dh = (calculate_task_duration(task)>0);
+    bool dh = (calculate_task_duration(task)>0.0);
 
     if(sh && sm && eh && em && dh){ 
         log_ok("time is valid");
     } else {
         if(!dh){
-            log_warn("end.time is INVALID: %02d:%02d", task->end.time.hour, task->end.time.min);
-            goto error_handling;
+            log_warn("duration is INVALID: %f hour(s)", calculate_task_duration(task));
+            return 1;
         }
         if(!sh){
             log_warn("start.time.hour is INVALID: %d", task->start.time.hour);
-            goto error_handling;
+            return 1;
         }
         if(!sm){
             log_warn("start.time.min is INVALID: %d", task->start.time.min);
-            goto error_handling;
+            return 1;
         }     
         if(!eh){
             log_warn("end.time.hour is INVALID: %d", task->end.time.hour);
-            goto error_handling;
+            return 1;
         }     
         if(!em){
             log_warn("end.time.min is INVALID: %d", task->end.time.min);
-            goto error_handling;
+            return 1;
         }
     }
     return 0;
-
-error_handling:
-    return 1;
 }
 
 int validate_date(const Date date)
@@ -52,12 +49,12 @@ int validate_date(const Date date)
 
     if(!dy){
         log_warn("date.year is INVALID: %d", date.year);
-        goto error_handling;
+        return 1;
     }
 
     if(!dm){
         log_warn("date.month is INVALID: %d", date.month);
-        goto error_handling;
+        return 1;
     }
 
     if( (date.month <= 7 && date.month % 2 != 0) ||
@@ -71,13 +68,10 @@ int validate_date(const Date date)
 
     if(!dd){
         log_warn("date.day is INVALID: %d", date.day);
-        goto error_handling;
+        return 1;
     }
 
     return 0;
-
-error_handling:
-    return 1;
 }
 
 float calculate_task_duration(const Task* task)
@@ -89,6 +83,7 @@ float calculate_task_duration(const Task* task)
         duration_h = task->end.time.hour - task->start.time.hour + (task->end.time.min - task->start.time.min)/60.0;
     } else if (diff < 0){ 
         duration_h = (24-task->start.time.hour)+task->end.time.hour+24*(calculate_task_duration_in_days(task)-1);
+        duration_h += (task->end.time.min - task->start.time.min)/60.0;
     } else {
         duration_h = -1.0f;
     }
@@ -141,19 +136,14 @@ int calculate_task_duration_in_days(const Task* task)
     return duration_days;
 }
 
-Time calculate_end_time(const Time start, float duration_h){
-    Time end;
-    float m = (duration_h - (int)duration_h)*60;
-    float h = duration_h-m/60;
-    end.hour = start.hour+(int)h;
-    end.min = start.min+(int)m;
-    if(end.min >= 60) {
-        end.min-=60;
-        end.hour++;
-    }
-    if(end.hour >= 24) {
-        end.hour-=24;
-        log_warn("endtime is on the next day.");
+Timestamp calculate_end_timestamp(const Timestamp start, float duration_h){
+    Timestamp end;
+    int days_passed = (int) duration_h/24;
+    int mins_remain = ((int)duration_h%24)*60;
+    end.date = shift_date_by_days(&start.date, days_passed);
+    end.time = shift_time_by_minutes(&start.time, mins_remain);
+    if(compare_time(&end.time, &start.time) < 0){
+        end.date = shift_date_by_days(&end.date, 1);
     }
     return end;
 }
@@ -188,7 +178,7 @@ Date shift_date_by_days(const Date* d, int days)
     long ryear = result.year;
     long abs = (rday>0)?rday: rday*(-1);
     do{
-        if(rday > 0) {
+        if(rday > mdays) {
             rday -= mdays;
             result.month++;
             mdays = get_days_in_month(result.month, leap);
@@ -266,32 +256,28 @@ int validate_time_format(const char* str)
     if(length == 2 || length == 1){
         if(!str_is_digit(str)){
             log_warn("invalid format: %s", str);
-            goto error_handling;
+            return 1;
         }
     } else if (length == 5) {
         if(str[2] != ':'){
             log_warn("invalid format: %s", str);
-            goto error_handling;
+            return 1;
         }
         for(int i=0; i<5; i++){
             if(!ch_is_digit(str[i])) {
                 log_warn("invalid format: %s", str);
-                goto error_handling;
+                return 1;
             }
             if(i == 1) i++;
         }
     } else {
         if(length > 5) log_warn("string is too long");
         else log_warn("invalid format: %s", str);
-        goto error_handling;
+        return 1;
     } 
     
-    if(g_verbose){
-        log_ok("SUCCESS: str is valid");
-    }
+    log_ok("str is valid");
     return 0;
-error_handling:
-    return 1;
 }
 
 int validate_date_format(const char* str)
@@ -300,31 +286,56 @@ int validate_date_format(const char* str)
     if(length == 2 || length == 1){
         if(!str_is_digit(str)){
             log_warn("invalid format: %s", str);
-            goto error_handling;
+            return 1;
         }
     } else if (length == 5 || length == 10) {
         if(str[2] != '.' || (length == 10 && str[5] != '.')){
             log_warn("invalid format: %s", str);
-            goto error_handling;
+            return 1;
         }
         for(int i=0; i<length; i++){
             if(i == 2 || i == 5) continue;
             if(!ch_is_digit(str[i])) {
                 log_warn("invalid format: %s", str);
-                goto error_handling;
+                return 1;
             }
         }
     } else {
         if(length > 10) log_warn("string is too long");
         else log_warn("invalid format: %s", str);
-        goto error_handling;
+        return 1;
     } 
     
-    log_ok("SUCCESS: str is valid");
+    log_ok("str is valid");
     return 0;
-error_handling:
-    return 1;
+}
 
+int validate_timestamp_format(const char* str)
+{
+    char buf[32];
+    memcpy(buf, str, sizeof(buf));
+
+    char* separator = strchr(buf, '/');
+
+    if(separator == NULL){
+        return validate_time_format(buf);
+    }
+
+    *separator = '\0';
+
+    const char* date = buf;
+    const char* time = separator+1;
+
+    if(validate_date_format(date)) {
+        return 1;
+    }
+
+    if(validate_time_format(time)) {
+        return 1;
+    }
+
+    log_ok("timestamp_format is valid");
+    return 0;
 }
 
 Time str_to_time(const char* str){
@@ -424,6 +435,45 @@ error_handling:
     date.year = -1;
 
     return date;
+}
+
+Timestamp str_to_timestamp(const char* str)
+{
+    Timestamp ts = {
+        .date = {.day = -1, .month = -1, .year = -1}, 
+        .time = {.hour = -1, .min = -1}
+    };
+
+    if(validate_timestamp_format(str) != 0){
+        log_warn("timestamp format is INVALID: %s", str);
+        return ts;
+    }    
+
+    char buf[32];
+    memcpy(buf, str, sizeof(buf));
+
+    char* separator = strchr(buf, '/');
+
+    const char* date;
+    const char* time;
+
+    if(separator == NULL) 
+    {
+        ts.time = str_to_time(buf);
+        if(ts.time.hour != -1 || ts.time.min != -1){
+            ts.date = get_date_today();
+        }
+        return ts;
+    }
+
+    *separator = '\0';
+
+    date = buf;
+    time = separator+1;
+
+    ts.date = str_to_date(date);
+    ts.time = str_to_time(time);
+    return ts;
 }
 
 long str_to_uint(const char* str)
